@@ -1,0 +1,30 @@
+{
+  "name": "product-service",
+  "version": "1.0.0",
+  "description": "Product microservice for E-Commerce Backend",
+  "main": "src/handlers/productHandler.js",
+  "scripts": {
+    "start": "node src/handlers/productHandler.js",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.500.0",
+    "@aws-sdk/lib-dynamodb": "^3.500.0",
+    "dotenv": "^16.4.5",
+    "joi": "^17.12.1",
+    "uuid": "^9.0.1"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "dynamodb",
+    "microservice",
+    "product-service"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^30.4.2"
+  }
+}

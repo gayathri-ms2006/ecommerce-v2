@@ -1,0 +1,21 @@
+{
+  "name": "order-service",
+  "version": "1.0.0",
+  "description": "Order microservice for E-Commerce Backend",
+  "main": "src/handlers/orderHandler.js",
+  "scripts": {
+    "test": "jest",
+    "test:coverage": "jest --coverage"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.500.0",
+    "@aws-sdk/client-lambda": "^3.500.0",
+    "@aws-sdk/lib-dynamodb": "^3.500.0",
+    "dotenv": "^16.4.5",
+    "joi": "^17.12.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2"
+  }
+}

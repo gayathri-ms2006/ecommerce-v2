@@ -1,0 +1,23 @@
+/* Sign Up page details stylesheet overrides */
+
+.card-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  color: #22c55e; /* var(--success) */
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  margin-bottom: 1.25rem;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.success-alert-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #22c55e;
+}
