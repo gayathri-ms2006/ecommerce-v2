@@ -1,0 +1,160 @@
+name: Backend Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # Job for testing Product Service
+  product-service-test:
+    name: Product Service Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecommerce-microservices/product-service
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: ecommerce-microservices/product-service/package-lock.json
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
+
+  # Job for testing Cart Service
+  cart-service-test:
+    name: Cart Service Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecommerce-microservices/cart-service
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: ecommerce-microservices/cart-service/package-lock.json
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
+
+  # Job for testing Inventory Service
+  inventory-service-test:
+    name: Inventory Service Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecommerce-microservices/inventory-service
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: ecommerce-microservices/inventory-service/package-lock.json
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
+
+  # Job for testing Wishlist Service
+  wishlist-service-test:
+    name: Wishlist Service Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecommerce-microservices/wishlist-service
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: ecommerce-microservices/wishlist-service/package-lock.json
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
+
+  # Job for testing Order Service
+  order-service-test:
+    name: Order Service Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecommerce-microservices/order-service
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: ecommerce-microservices/order-service/package-lock.json
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
+
+  # Job for testing Payment Service
+  payment-service-test:
+    name: Payment Service Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecommerce-microservices/payment-service
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: ecommerce-microservices/payment-service/package-lock.json
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
