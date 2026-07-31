@@ -5,7 +5,6 @@ const { BadRequestError } = require("../utils/errors");
 
 module.exports.handler = async (event) => {
   try {
-
     const method =
       event.httpMethod ||
       event.requestContext?.http?.method;
@@ -15,9 +14,21 @@ module.exports.handler = async (event) => {
 
     switch (method) {
 
+      // Handle CORS Preflight
+      case "OPTIONS":
+        return {
+          statusCode: 200,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Methods":
+              "GET,POST,PUT,DELETE,OPTIONS"
+          },
+          body: ""
+        };
+
       // Create Product
       case "POST": {
-
         const body =
           event.body ? JSON.parse(event.body) : {};
 
