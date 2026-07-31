@@ -3,14 +3,45 @@ const { BadRequestError } = require("../utils/errors");
 
 const createOrderSchema = Joi.object({
   userId: Joi.string().required(),
-  paymentMethod: Joi.string().valid("CREDIT_CARD", "DEBIT_CARD", "PAYPAL", "STRIPE").required(),
+
+  customerName: Joi.string()
+    .min(2)
+    .max(100)
+    .required(),
+
+  customerEmail: Joi.string()
+    .email()
+    .required(),
+
+  paymentMethod: Joi.string()
+    .valid(
+      "CREDIT_CARD",
+      "DEBIT_CARD",
+      "PAYPAL",
+      "STRIPE",
+      "UPI",
+      "CASH_ON_DELIVERY"
+    )
+    .required(),
+
   products: Joi.array()
     .items(
       Joi.object({
         productId: Joi.string().required(),
-        productName: Joi.string().min(2).max(100).required(),
-        quantity: Joi.number().integer().positive().required(),
-        price: Joi.number().greater(0).required(),
+
+        productName: Joi.string()
+          .min(2)
+          .max(100)
+          .required(),
+
+        quantity: Joi.number()
+          .integer()
+          .positive()
+          .required(),
+
+        price: Joi.number()
+          .greater(0)
+          .required(),
       })
     )
     .min(1)
@@ -18,17 +49,29 @@ const createOrderSchema = Joi.object({
 });
 
 const validate = (schema, data) => {
-  const { error, value } = schema.validate(data, { abortEarly: false });
+  const { error, value } = schema.validate(
+    data,
+    {
+      abortEarly: false,
+    }
+  );
+
   if (error) {
-    const details = error.details.map((detail) => ({
+    const details = error.details.map(detail => ({
       message: detail.message,
       path: detail.path,
     }));
-    throw new BadRequestError("Validation failed", details);
+
+    throw new BadRequestError(
+      "Validation failed",
+      details
+    );
   }
+
   return value;
 };
 
 module.exports = {
-  validateCreate: (data) => validate(createOrderSchema, data),
+  validateCreate: (data) =>
+    validate(createOrderSchema, data),
 };
