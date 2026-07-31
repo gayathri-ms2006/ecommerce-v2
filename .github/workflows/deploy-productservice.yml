@@ -26,16 +26,29 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install Dependencies
+      - name: Install Dependencies For Testing
         run: npm install
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Clean Existing Modules
+        run: rm -rf node_modules
+
+      - name: Install Production Dependencies
+        run: npm ci --omit=dev
 
       - name: Create Deployment Package
         run: |
           zip -r productservice.zip . \
             -x "*.git*" \
-            -x "node_modules/*" \
             -x "*.test.js" \
-            -x "coverage/*"
+            -x "coverage/*" \
+            -x ".github/*"
+
+      - name: Verify ZIP Contents
+        run: |
+          unzip -l productservice.zip | head -100
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -51,7 +64,7 @@ jobs:
             --function-name productservice \
             --zip-file fileb://productservice.zip
 
-      - name: Wait for Deployment
+      - name: Wait For Deployment
         run: |
           aws lambda wait function-updated \
             --function-name productservice

@@ -7,7 +7,7 @@ class ProductService {
     const product = new Product(data);
     return await productRepository.create(product.toJSON());
   }
-// deployment verification
+
   async getProduct(productId) {
     const productData = await productRepository.getById(productId);
 
