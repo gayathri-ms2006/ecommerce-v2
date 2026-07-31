@@ -3,7 +3,7 @@ name: Deploy Wishlist Service
 on:
   workflow_run:
     workflows:
-      - Backend Tests
+      - Wishlist Service Tests
     types:
       - completed
 

@@ -3,7 +3,7 @@ name: Deploy Product Service
 on:
   workflow_run:
     workflows:
-      - Backend Tests
+      - Product Service Tests
     types:
       - completed
 

@@ -3,7 +3,7 @@ name: Deploy Order Service
 on:
   workflow_run:
     workflows:
-      - Backend Tests
+      - Order Service Tests
     types:
       - completed
 

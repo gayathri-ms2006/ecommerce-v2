@@ -3,7 +3,7 @@ name: Deploy Inventory Service
 on:
   workflow_run:
     workflows:
-      - Backend Tests
+      - Inventory Service Tests
     types:
       - completed
 

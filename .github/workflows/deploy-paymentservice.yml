@@ -3,7 +3,7 @@ name: Deploy Payment Service
 on:
   workflow_run:
     workflows:
-      - Backend Tests
+      - Payment Service Tests
     types:
       - completed
 
