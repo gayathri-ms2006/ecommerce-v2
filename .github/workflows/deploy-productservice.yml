@@ -1,0 +1,53 @@
+name: Deploy Product Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ecommerce-microservices/product-service/**'
+      - '.github/workflows/deploy-productservice.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ecommerce-microservices/product-service
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Create Deployment Package
+        run: |
+          zip -r productservice.zip . \
+            -x "*.git*" \
+            -x "node_modules/*" \
+            -x "*.test.js"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name productservice \
+            --zip-file fileb://productservice.zip
