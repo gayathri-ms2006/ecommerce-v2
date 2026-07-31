@@ -4,15 +4,22 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'ecommerce-microservices/**'
+      - '.github/workflows/backend-tests.yml'
+
   pull_request:
     branches:
       - main
+    paths:
+      - 'ecommerce-microservices/**'
+      - '.github/workflows/backend-tests.yml'
 
 jobs:
-  # Job for testing Product Service
   product-service-test:
     name: Product Service Tests
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: ecommerce-microservices/product-service
@@ -24,8 +31,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
+          cache: npm
           cache-dependency-path: ecommerce-microservices/product-service/package-lock.json
 
       - name: Install Dependencies
@@ -34,10 +41,10 @@ jobs:
       - name: Run Tests
         run: npm test
 
-  # Job for testing Cart Service
   cart-service-test:
     name: Cart Service Tests
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: ecommerce-microservices/cart-service
@@ -49,8 +56,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
+          cache: npm
           cache-dependency-path: ecommerce-microservices/cart-service/package-lock.json
 
       - name: Install Dependencies
@@ -59,10 +66,10 @@ jobs:
       - name: Run Tests
         run: npm test
 
-  # Job for testing Inventory Service
   inventory-service-test:
     name: Inventory Service Tests
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: ecommerce-microservices/inventory-service
@@ -74,8 +81,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
+          cache: npm
           cache-dependency-path: ecommerce-microservices/inventory-service/package-lock.json
 
       - name: Install Dependencies
@@ -84,10 +91,10 @@ jobs:
       - name: Run Tests
         run: npm test
 
-  # Job for testing Wishlist Service
   wishlist-service-test:
     name: Wishlist Service Tests
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: ecommerce-microservices/wishlist-service
@@ -99,8 +106,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
+          cache: npm
           cache-dependency-path: ecommerce-microservices/wishlist-service/package-lock.json
 
       - name: Install Dependencies
@@ -109,10 +116,10 @@ jobs:
       - name: Run Tests
         run: npm test
 
-  # Job for testing Order Service
   order-service-test:
     name: Order Service Tests
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: ecommerce-microservices/order-service
@@ -124,8 +131,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
+          cache: npm
           cache-dependency-path: ecommerce-microservices/order-service/package-lock.json
 
       - name: Install Dependencies
@@ -134,10 +141,10 @@ jobs:
       - name: Run Tests
         run: npm test
 
-  # Job for testing Payment Service
   payment-service-test:
     name: Payment Service Tests
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: ecommerce-microservices/payment-service
@@ -149,8 +156,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
+          cache: npm
           cache-dependency-path: ecommerce-microservices/payment-service/package-lock.json
 
       - name: Install Dependencies

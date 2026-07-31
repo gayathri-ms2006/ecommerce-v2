@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'ecommerce-frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
 
 jobs:
   deploy:
@@ -20,12 +23,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install Dependencies
         run: npm install
 
-      - name: Run Tests
+      - name: Run Frontend Tests
         run: npm test -- --watchAll=false
 
       - name: Build Application
