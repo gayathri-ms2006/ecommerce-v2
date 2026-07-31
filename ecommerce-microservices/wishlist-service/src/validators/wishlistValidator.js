@@ -1,33 +1,50 @@
 const Joi = require("joi");
-const { BadRequestError } = require("../utils/errors");
 
-const addToWishlistSchema = Joi.object({
+const addWishlistSchema = Joi.object({
   userId: Joi.string().required(),
+
   productId: Joi.string().required(),
-  productName: Joi.string().min(2).max(100).required(),
-  productPrice: Joi.number().greater(0).required(),
-  productImage: Joi.string().allow("").optional(),
-  priceWhenAdded: Joi.number().greater(0).optional(),
+
+  productName: Joi.string().required(),
+
+  price: Joi.number()
+    .positive()
+    .required(),
+
+  imageUrl: Joi.string()
+    .allow("")
+    .optional(),
+
+  addedAt: Joi.string()
+    .optional()
 });
 
-const validate = (schema, data) => {
-  const { error, value } = schema.validate(data, { abortEarly: false });
-  if (error) {
-    const details = error.details.map((detail) => ({
-      message: detail.message,
-      path: detail.path,
-    }));
-    throw new BadRequestError("Validation failed", details);
-  }
-  return value;
-};
-
 module.exports = {
-  validateAdd: (data) => validate(addToWishlistSchema, data),
-  validateProductId: (productId) => {
-    if (!productId || typeof productId !== "string") {
-      throw new BadRequestError("Invalid productId");
+  validateAdd(data) {
+    const { error, value } =
+      addWishlistSchema.validate(data);
+
+    if (error) {
+      throw new Error(
+        error.details[0].message
+      );
     }
-    return productId;
+
+    return value;
+  },
+
+  validateProductId(productId) {
+    const schema = Joi.string().required();
+
+    const { error, value } =
+      schema.validate(productId);
+
+    if (error) {
+      throw new Error(
+        error.details[0].message
+      );
+    }
+
+    return value;
   }
 };

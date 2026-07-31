@@ -1,30 +1,34 @@
-const Joi = require("joi");
-const { BadRequestError } = require("../utils/errors");
-
-const createPaymentSchema = Joi.object({
-  orderId: Joi.string().required(),
-  amount: Joi.number().greater(0).required(),
-  paymentMethod: Joi.string().valid("CREDIT_CARD", "DEBIT_CARD", "PAYPAL", "STRIPE").required(),
-});
-
-const refundPaymentSchema = Joi.object({
-  paymentId: Joi.string().uuid().required(),
-  amount: Joi.number().greater(0).required(),
-});
-
-const validate = (schema, data) => {
-  const { error, value } = schema.validate(data, { abortEarly: false });
-  if (error) {
-    const details = error.details.map((detail) => ({
-      message: detail.message,
-      path: detail.path,
-    }));
-    throw new BadRequestError("Validation failed", details);
-  }
-  return value;
-};
-
 module.exports = {
-  validateCreate: (data) => validate(createPaymentSchema, data),
-  validateRefund: (data) => validate(refundPaymentSchema, data),
+  success: (data, statusCode = 200) => ({
+    statusCode,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true,
+    },
+    body: JSON.stringify({ success: true, data }),
+  }),
+  error: (err) => {
+    const statusCode = err.statusCode || 500;
+    const message = err.message || 'Internal Server Error';
+    const code = err.code || 'INTERNAL_SERVER_ERROR';
+    const details = err.details || null;
+
+    return {
+      statusCode,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': true,
+      },
+      body: JSON.stringify({
+        success: false,
+        error: {
+          code,
+          message,
+          details
+        }
+      }),
+    };
+  }
 };

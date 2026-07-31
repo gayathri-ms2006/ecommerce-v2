@@ -1,7 +1,7 @@
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { DynamoDBDocumentClient } = require("@aws-sdk/lib-dynamodb");
 
-const region = process.env.AWS_REGION || "ap-southeast-1";
+const region = process.env.AWS_REGION || "us-east-1";
 
 const config = {
   region,
