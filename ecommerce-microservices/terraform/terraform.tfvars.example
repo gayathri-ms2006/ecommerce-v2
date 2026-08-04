@@ -1,0 +1,22 @@
+# ==============================================================================
+# Terraform Variables Values (Example)
+# ==============================================================================
+# Instructions: Copy this file to "terraform.tfvars" and customize the values
+# for your specific environment. Do NOT commit the final "terraform.tfvars"
+# file if it contains sensitive configurations.
+
+# The target AWS region to deploy the tables to
+aws_region = "ap-southeast-1"
+
+# The name of the overall project (used for default tagging)
+project_name = "ecommerce-v2"
+
+# The environment you are deploying to (e.g. dev, staging, prod)
+environment = "dev"
+
+# The suffix appended to your DynamoDB tables (e.g., product-gayathri)
+# Customize this value to avoid name collisions in sharing AWS accounts.
+resource_owner = "gayathri"
+
+# DynamoDB Billing Mode: PAY_PER_REQUEST (On-Demand) or PROVISIONED (Provisioned Capacity)
+billing_mode = "PAY_PER_REQUEST"
