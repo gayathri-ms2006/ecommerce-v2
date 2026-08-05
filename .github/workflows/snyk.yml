@@ -1,0 +1,37 @@
+name: Snyk Security Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  snyk:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1d0ff469b7ec7b3cbdfd50dc03cad9306b747065 # v4.2.0
+        with:
+          node-version: '20'
+
+      - name: Install Snyk CLI
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
+
+      - name: Authenticate using SNYK_TOKEN
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk Open Source Scan
+        run: snyk test --all-projects || true
+
+      - name: Snyk IaC Scan
+        run: snyk iac test --report || true
+
+      - name: Snyk Monitor
+        run: snyk monitor --all-projects || true
