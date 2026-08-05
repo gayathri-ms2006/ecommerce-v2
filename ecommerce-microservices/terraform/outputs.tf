@@ -93,4 +93,29 @@ output "sns_topic_arn" {
   value       = aws_sns_topic.order_events.arn
 }
 
+# ==============================================================================
+# Observability Outputs
+# ==============================================================================
+
+output "dashboard_name" {
+  description = "The name of the CloudWatch dashboard."
+  value       = aws_cloudwatch_dashboard.ecommerce.dashboard_name
+}
+
+output "alert_topic_arn" {
+  description = "The ARN of the alerts SNS topic."
+  value       = aws_sns_topic.alerts.arn
+}
+
+output "alert_topic_name" {
+  description = "The name of the alerts SNS topic."
+  value       = aws_sns_topic.alerts.name
+}
+
+output "cloudfront_distribution_id" {
+  description = "The ID of the CloudFront distribution."
+  value       = aws_cloudfront_distribution.ecommerce.id
+}
+
+
 

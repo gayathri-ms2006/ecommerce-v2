@@ -120,8 +120,11 @@ locals {
         ApplicationService = "ecommerce"
         CostCentre         = "ecommerce2"
       }
+      tracing_mode = "Active"
+      layers       = ["arn:aws:lambda:ap-southeast-1:615299751070:layer:AWSOpenTelemetryDistroJs:15"]
       environment_variables = {
-        PRODUCTS_TABLE = "product-${var.resource_owner}"
+        PRODUCTS_TABLE          = "product-${var.resource_owner}"
+        AWS_LAMBDA_EXEC_WRAPPER = "/opt/otel-instrument"
       }
     }
     cart = {
@@ -132,8 +135,11 @@ locals {
         ApplicationService = "ecommerce"
         CostCentre         = "ecommerce2"
       }
+      tracing_mode = "Active"
+      layers       = ["arn:aws:lambda:ap-southeast-1:615299751070:layer:AWSOpenTelemetryDistroJs:15"]
       environment_variables = {
-        CART_TABLE = "cart-${var.resource_owner}"
+        CART_TABLE              = "cart-${var.resource_owner}"
+        AWS_LAMBDA_EXEC_WRAPPER = "/opt/otel-instrument"
       }
     }
     inventory = {
@@ -144,24 +150,33 @@ locals {
         ApplicationService = "ecommerce"
         CostCentre         = "ecommerce2"
       }
+      tracing_mode = "Active"
+      layers       = ["arn:aws:lambda:ap-southeast-1:615299751070:layer:AWSOpenTelemetryDistroJs:15"]
       environment_variables = {
-        INVENTORY_TABLE = "inventory-${var.resource_owner}"
+        INVENTORY_TABLE         = "inventory-${var.resource_owner}"
+        AWS_LAMBDA_EXEC_WRAPPER = "/opt/otel-instrument"
       }
     }
     wishlist = {
       function_name = "wishlist" # Exact name of the existing wishlist Lambda in AWS
       handler       = "src/handlers/wishlistHandler.handler"
       timeout       = 3
+      tracing_mode  = "Active"
+      layers        = ["arn:aws:lambda:ap-southeast-1:615299751070:layer:AWSOpenTelemetryDistroJs:15"]
       environment_variables = {
-        WISHLIST_TABLE = "wishlist"
+        WISHLIST_TABLE          = "wishlist"
+        AWS_LAMBDA_EXEC_WRAPPER = "/opt/otel-instrument"
       }
     }
     payment = {
       function_name = "paymentservice"
       handler       = "src/handlers/paymentHandler.handler"
       timeout       = 3
+      tracing_mode  = "Active"
+      layers        = ["arn:aws:lambda:ap-southeast-1:615299751070:layer:AWSOpenTelemetryDistroJs:15"]
       environment_variables = {
-        PAYMENTS_TABLE = "payment-${var.resource_owner}"
+        PAYMENTS_TABLE          = "payment-${var.resource_owner}"
+        AWS_LAMBDA_EXEC_WRAPPER = "/opt/otel-instrument"
       }
     }
     order = {
