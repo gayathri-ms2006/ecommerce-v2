@@ -3,7 +3,8 @@
 # ==============================================================================
 
 resource "aws_sns_topic" "alerts" {
-  name = "ecommerce-alerts"
+  name              = "ecommerce-alerts"
+  kms_master_key_id = "alias/aws/sns"
 
   # Prevent drift on manually managed tags if any exist
   lifecycle {
