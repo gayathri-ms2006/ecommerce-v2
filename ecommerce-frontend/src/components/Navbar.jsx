@@ -50,7 +50,7 @@ const Navbar = ({ searchQuery = '', onSearchChange, selectedCategory = '', onCat
                 .filter(Boolean)
                 .map((c) => c.trim())
             )
-          ).sort();
+          ).sort((a, b) => a.localeCompare(b));
           setCategories(uniqueCategories);
         }
       } catch (error) {

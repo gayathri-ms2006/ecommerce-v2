@@ -73,7 +73,7 @@ const Products = () => {
           .filter(Boolean)
           .map((c) => c.trim())
       )
-    ).sort();
+    ).sort((a, b) => a.localeCompare(b));
   }, [products]);
 
 

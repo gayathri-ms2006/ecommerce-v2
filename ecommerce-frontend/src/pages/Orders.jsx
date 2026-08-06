@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getUserOrders, cancelOrder } from '../services/orders';
+import { fetchProductsList } from '../services/products';
 import { isAuthenticated } from '../services/auth';
 import Navbar from '../components/Navbar';
 import '../styles/Orders.css';
@@ -21,33 +22,35 @@ const OrderTimelineCompact = ({ status }) => {
   }
 
   const stages = [
-    { label: 'Placed', emoji: '✓' },
-    { label: 'Processing', emoji: '⚙️' },
-    { label: 'Shipped', emoji: '🚚' },
-    { label: 'Out for Delivery', emoji: '📦' },
-    { label: 'Delivered', emoji: '🎉' }
+    { label: 'Order Placed', emoji: '✓', key: 'PLACED' },
+    { label: 'Processing', emoji: '⚙️', key: 'PROCESSING' },
+    { label: 'Shipped', emoji: '🚚', key: 'SHIPPED' },
+    { label: 'Out for Delivery', emoji: '📦', key: 'OUT_FOR_DELIVERY' },
+    { label: 'Delivered', emoji: '🎉', key: 'DELIVERED' }
   ];
 
   let activeIndex = 0;
-  if (currentStatus === 'PROCESSING') activeIndex = 1;
+  if (currentStatus === 'PROCESSING' || currentStatus === 'PACKED') activeIndex = 1;
   else if (currentStatus === 'SHIPPED') activeIndex = 2;
   else if (currentStatus === 'OUT_FOR_DELIVERY') activeIndex = 3;
   else if (currentStatus === 'DELIVERED') activeIndex = 4;
 
   return (
-    <div className="orders-horizontal-timeline">
+    <div className="orders-timeline-flow">
       {stages.map((stage, idx) => {
         const isCompleted = idx <= activeIndex;
         const isActive = idx === activeIndex;
         
         return (
-          <div key={idx} className={`timeline-horizontal-step ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}>
-            <div className="step-icon-circle">
-              {isCompleted ? stage.emoji : ''}
+          <div key={idx} className={`orders-timeline-node ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}>
+            <div className="orders-timeline-icon">
+              {isCompleted ? '✓' : stage.emoji}
             </div>
-            <span className="step-label-text">{stage.label}</span>
+            <div className="orders-timeline-text">
+              <span className="orders-timeline-label">{stage.label}</span>
+            </div>
             {idx < stages.length - 1 && (
-              <div className="step-connecting-line" />
+              <div className="orders-timeline-connector" />
             )}
           </div>
         );
@@ -56,23 +59,28 @@ const OrderTimelineCompact = ({ status }) => {
   );
 };
 
-// Skeleton loading layout for order table
+// Skeleton loading layout for orders cards
 const OrdersSkeleton = () => (
-  <div className="orders-table-wrapper">
-    <div className="skeleton-table-header loading-shimmer" />
-    <div className="skeleton-table-row loading-shimmer" />
-    <div className="skeleton-table-row loading-shimmer" style={{ animationDelay: '0.2s' }} />
+  <div className="orders-skeleton-wrapper">
+    <div className="orders-skeleton-card loading-shimmer" />
+    <div className="orders-skeleton-card loading-shimmer" style={{ animationDelay: '0.2s' }} />
+    <div className="orders-skeleton-card loading-shimmer" style={{ animationDelay: '0.4s' }} />
   </div>
 );
 
 const Orders = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  const [catalogProducts, setCatalogProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
   const [toast, setToast] = useState({ message: '', type: '' });
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [sortBy, setSortBy] = useState('LATEST');
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -104,7 +112,14 @@ const Orders = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await getUserOrders();
+      
+      const [res, productsRes] = await Promise.all([
+        getUserOrders(),
+        fetchProductsList().catch(err => {
+          console.error("Failed to load catalog products:", err);
+          return null;
+        })
+      ]);
 
       let ordersList = [];
       if (res) {
@@ -119,6 +134,10 @@ const Orders = () => {
 
       ordersList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setOrders(ordersList);
+
+      if (productsRes && productsRes.success && Array.isArray(productsRes.data)) {
+        setCatalogProducts(productsRes.data);
+      }
     } catch (err) {
       console.error('Failed to load orders:', err);
       setError(err.message || 'Failed to retrieve orders from the server.');
@@ -147,6 +166,69 @@ const Orders = () => {
     }).format(price || 0);
   };
 
+  const getProductImage = useCallback((productId) => {
+    const match = catalogProducts.find((p) => String(p.productId || p.id) === String(productId));
+    return match ? match.imageUrl : '';
+  }, [catalogProducts]);
+
+  // Compute KPI statistics
+  const stats = useMemo(() => {
+    let total = orders.length;
+    let processing = 0;
+    let delivered = 0;
+    let cancelled = 0;
+
+    orders.forEach(order => {
+      const status = (order.status || '').toUpperCase();
+      if (['PENDING', 'PROCESSING', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY'].includes(status)) {
+        processing++;
+      } else if (status === 'DELIVERED') {
+        delivered++;
+      } else if (status === 'CANCELLED') {
+        cancelled++;
+      }
+    });
+
+    return { total, processing, delivered, cancelled };
+  }, [orders]);
+
+  // Filter and Sort orders
+  const filteredOrders = useMemo(() => {
+    let result = [...orders];
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(order => {
+        const matchesId = String(order.orderId).toLowerCase().includes(query);
+        const matchesProducts = (order.products || []).some(p =>
+          (p.productName || '').toLowerCase().includes(query)
+        ) || (order.productName || '').toLowerCase().includes(query);
+        return matchesId || matchesProducts;
+      });
+    }
+
+    if (statusFilter !== 'ALL') {
+      result = result.filter(order => {
+        const status = (order.status || 'PENDING').toUpperCase();
+        if (statusFilter === 'PROCESSING') {
+          return ['PENDING', 'PROCESSING', 'PACKED'].includes(status);
+        }
+        if (statusFilter === 'SHIPPED') {
+          return ['SHIPPED', 'OUT_FOR_DELIVERY'].includes(status);
+        }
+        return status === statusFilter;
+      });
+    }
+
+    result.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return sortBy === 'LATEST' ? dateB - dateA : dateA - dateB;
+    });
+
+    return result;
+  }, [orders, searchQuery, statusFilter, sortBy]);
+
   return (
     <div className="orders-page-wrapper">
       <Navbar />
@@ -160,7 +242,7 @@ const Orders = () => {
       <main className="orders-content-container">
         <header className="orders-header">
           <h1 className="orders-page-title">Your Orders</h1>
-          <p className="orders-page-subtitle">Track status and review your previous purchasing logs.</p>
+          <p className="orders-page-subtitle">Track shipping status, download invoices, and manage your orders history.</p>
         </header>
 
         {loading && <OrdersSkeleton />}
@@ -188,20 +270,105 @@ const Orders = () => {
         )}
 
         {!loading && !error && orders.length > 0 && (
-          <div className="orders-table-wrapper">
-            <table className="orders-compact-table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Order Date</th>
-                  <th>Total Amount</th>
-                  <th>Status</th>
-                  <th>Payment Method</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((order) => {
+          <>
+            {/* KPI Cards Row */}
+            <div className="orders-kpi-row">
+              <div className="orders-kpi-card total">
+                <div className="orders-kpi-icon">📦</div>
+                <div className="orders-kpi-info">
+                  <span className="orders-kpi-label">Total Orders</span>
+                  <strong className="orders-kpi-value">{stats.total}</strong>
+                </div>
+              </div>
+              <div className="orders-kpi-card processing">
+                <div className="orders-kpi-icon">⏳</div>
+                <div className="orders-kpi-info">
+                  <span className="orders-kpi-label">Processing</span>
+                  <strong className="orders-kpi-value">{stats.processing}</strong>
+                </div>
+              </div>
+              <div className="orders-kpi-card delivered">
+                <div className="orders-kpi-icon">✅</div>
+                <div className="orders-kpi-info">
+                  <span className="orders-kpi-label">Delivered</span>
+                  <strong className="orders-kpi-value">{stats.delivered}</strong>
+                </div>
+              </div>
+              <div className="orders-kpi-card cancelled">
+                <div className="orders-kpi-icon">✕</div>
+                <div className="orders-kpi-info">
+                  <span className="orders-kpi-label">Cancelled</span>
+                  <strong className="orders-kpi-value">{stats.cancelled}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="orders-toolbar-bar">
+              <div className="orders-search-wrapper">
+                <span className="orders-search-icon">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search orders by ID or item name..."
+                  className="orders-search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="orders-filter-group">
+                <button
+                  className={`orders-filter-btn ${statusFilter === 'ALL' ? 'active' : ''}`}
+                  onClick={() => setStatusFilter('ALL')}
+                >
+                  All Orders
+                </button>
+                <button
+                  className={`orders-filter-btn ${statusFilter === 'PROCESSING' ? 'active' : ''}`}
+                  onClick={() => setStatusFilter('PROCESSING')}
+                >
+                  Processing
+                </button>
+                <button
+                  className={`orders-filter-btn ${statusFilter === 'SHIPPED' ? 'active' : ''}`}
+                  onClick={() => setStatusFilter('SHIPPED')}
+                >
+                  Shipped
+                </button>
+                <button
+                  className={`orders-filter-btn ${statusFilter === 'DELIVERED' ? 'active' : ''}`}
+                  onClick={() => setStatusFilter('DELIVERED')}
+                >
+                  Delivered
+                </button>
+                <button
+                  className={`orders-filter-btn ${statusFilter === 'CANCELLED' ? 'active' : ''}`}
+                  onClick={() => setStatusFilter('CANCELLED')}
+                >
+                  Cancelled
+                </button>
+              </div>
+              <div className="orders-sort-wrapper">
+                <label htmlFor="orders-sort-select">Sort:</label>
+                <select
+                  id="orders-sort-select"
+                  className="orders-sort-select"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="LATEST">Latest First</option>
+                  <option value="OLDEST">Oldest First</option>
+                </select>
+              </div>
+            </div>
+
+            {filteredOrders.length === 0 ? (
+              <div className="orders-no-match-state">
+                <p>No orders matched your active search or status filters.</p>
+              </div>
+            ) : (
+              /* Order Cards List */
+              <div className="orders-cards-list">
+                {filteredOrders.map((order) => {
                   const isExpanded = expandedOrderId === order.orderId;
                   const formattedDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
                     year: 'numeric',
@@ -211,111 +378,154 @@ const Orders = () => {
                   const status = (order.status || 'PENDING').toUpperCase();
                   const statusClass = status.toLowerCase();
 
+                  let statusLabel = status;
+                  if (status === 'PENDING') statusLabel = 'Processing';
+                  else if (status === 'OUT_FOR_DELIVERY') statusLabel = 'Out for Delivery';
+
                   return (
-                    <React.Fragment key={order.orderId}>
-                      <tr className={`order-main-row ${isExpanded ? 'row-active' : ''}`}>
-                        <td>
-                          <span className="order-id-code">{order.orderId}</span>
-                        </td>
-                        <td>{formattedDate}</td>
-                        <td>
-                          <strong className="order-price-val">
-                            {formatPrice(order.totalAmount || order.price)}
-                          </strong>
-                        </td>
-                        <td>
-                          <span className={`status-badge status-${statusClass}`}>{status}</span>
-                        </td>
-                        <td>
-                          <span className="payment-method-tag">
-                            {order.paymentMethod ? order.paymentMethod.replace(/_/g, ' ') : 'CREDIT CARD'}
+                    <div key={order.orderId} className={`order-card-box ${isExpanded ? 'card-expanded' : ''}`}>
+                      {/* Card Header */}
+                      <div className="order-card-header">
+                        <div className="header-meta-details">
+                          <div className="meta-block">
+                            <span className="meta-title">Order ID</span>
+                            <strong className="meta-value">#{order.orderId}</strong>
+                          </div>
+                          <div className="meta-block">
+                            <span className="meta-title">Placed on</span>
+                            <span className="meta-value">{formattedDate}</span>
+                          </div>
+                          <div className="meta-block">
+                            <span className="meta-title">Total</span>
+                            <strong className="meta-value text-primary">
+                              {formatPrice(order.totalAmount || order.price)}
+                            </strong>
+                          </div>
+                          <div className="meta-block desktop-only">
+                            <span className="meta-title">Payment Method</span>
+                            <span className="payment-method-tag">
+                              {order.paymentMethod ? order.paymentMethod.replace(/_/g, ' ') : 'CREDIT CARD'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="header-status-badge">
+                          <span className={`status-badge status-${statusClass}`}>
+                            {statusLabel}
                           </span>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
+                        </div>
+                      </div>
+
+                      {/* Card Body */}
+                      <div className="order-card-body">
+                        <div className="order-products-scroller">
+                          {(order.products || []).map((prod, idx) => {
+                            const img = getProductImage(prod.productId);
+                            return (
+                              <div key={prod.productId || idx} className="order-product-item-row">
+                                <div className="order-product-img-box">
+                                  {img ? (
+                                    <img src={img} alt={prod.productName} className="order-product-img" />
+                                  ) : (
+                                    <div className="order-product-img-placeholder">📦</div>
+                                  )}
+                                </div>
+                                <div className="order-product-meta">
+                                  <h4 className="order-product-name">{prod.productName || 'E-Shop Product'}</h4>
+                                  <div className="order-product-qty-row">
+                                    <span className="order-product-qty">Qty: {prod.quantity || 1}</span>
+                                    <span className="order-product-price">
+                                      {formatPrice(prod.price * (prod.quantity || 1))}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {(!order.products || order.products.length === 0) && (
+                            <div className="order-product-item-row">
+                              <div className="order-product-img-box">
+                                <div className="order-product-img-placeholder">📦</div>
+                              </div>
+                              <div className="order-product-meta">
+                                <h4 className="order-product-name">{order.productName || 'E-Shop Product'}</h4>
+                                <div className="order-product-qty-row">
+                                  <span className="order-product-qty">Qty: 1</span>
+                                  <span className="order-product-price">{formatPrice(order.price || 0)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="order-delivery-estimate-box">
+                          <span className="estimate-label">Delivery Estimate:</span>
+                          <strong className="estimate-value">Standard Transit (3-5 Business Days)</strong>
+                        </div>
+                      </div>
+
+                      {/* Card Actions Footer */}
+                      <div className="order-card-actions-bar">
+                        <div className="actions-left-links">
+                          <Link
+                            to={`/track-order?orderId=${encodeURIComponent(order.orderId)}`}
+                            className="btn-track-shipment"
+                          >
+                            Track Order
+                          </Link>
                           <button
-                            className="btn-view-details"
+                            className="btn-cancel-order"
+                            disabled={statusClass === 'delivered' || statusClass === 'cancelled' || cancellingId === order.orderId}
+                            onClick={() => handleCancelOrder(order.orderId)}
+                          >
+                            {cancellingId === order.orderId ? 'Cancelling...' : 'Cancel Order'}
+                          </button>
+                        </div>
+                        <div className="actions-right-toggle">
+                          <button
+                            className="btn-toggle-details-accordion"
                             onClick={() => toggleOrderExpand(order.orderId)}
                           >
                             {isExpanded ? 'Hide Details ▲' : 'View Details ▼'}
                           </button>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
 
+                      {/* Expanded Section (Details, Live Tracking) */}
                       {isExpanded && (
-                        <tr className="order-expanded-row">
-                          <td colSpan="6">
-                            <div className="expanded-details-container">
-                              <div className="expanded-details-grid">
-                                
-                                {/* Left Section: Purchased Items list */}
-                                <div className="expanded-panel items-panel">
-                                  <h4 className="panel-title">Purchased Items</h4>
-                                  <div className="products-mini-list">
-                                    {(order.products || []).map((prod, idx) => (
-                                      <div key={prod.productId || idx} className="product-item-mini-row">
-                                        <div className="product-mini-details">
-                                          <span className="product-mini-name">{prod.productName || 'E-Shop Product'}</span>
-                                          <span className="product-mini-qty">Qty: {prod.quantity || 1}</span>
-                                        </div>
-                                        <span className="product-mini-price">
-                                          {formatPrice(prod.price * (prod.quantity || 1))}
-                                        </span>
-                                      </div>
-                                    ))}
-                                    {(!order.products || order.products.length === 0) && (
-                                      <div className="product-item-mini-row">
-                                        <div className="product-mini-details">
-                                          <span className="product-mini-name">{order.productName || 'E-Shop Product'}</span>
-                                          <span className="product-mini-qty">Qty: 1</span>
-                                        </div>
-                                        <span className="product-mini-price">{formatPrice(order.price || 0)}</span>
-                                      </div>
-                                    )}
-                                  </div>
+                        <div className="order-card-expanded-drawer">
+                          <div className="expanded-drawer-grid">
+                            <div className="expanded-section-panel tracking-timeline-panel">
+                              <h4 className="expanded-panel-title">Fulfillment Progress</h4>
+                              <OrderTimelineCompact status={order.status} />
+                            </div>
+                            <div className="expanded-section-panel delivery-summary-panel">
+                              <h4 className="expanded-panel-title">Shipping & Invoice Details</h4>
+                              <div className="delivery-summary-details-box">
+                                <div className="summary-detail-item">
+                                  <span className="detail-item-title">Courier Partner</span>
+                                  <span className="detail-item-desc">E-Shop Premium Express</span>
                                 </div>
-
-                                {/* Middle Section: Delivery details */}
-                                <div className="expanded-panel delivery-panel">
-                                  <h4 className="panel-title">Delivery Information</h4>
-                                  <div className="delivery-info-box">
-                                    <p><strong>Courier:</strong> E-Shop Premium Express</p>
-                                    <p><strong>Address:</strong> Customer Shipping Address (On File)</p>
-                                    <p><strong>Expected Delivery:</strong> Standard Transit (3-5 Business Days)</p>
-                                  </div>
-                                  <div className="expanded-actions-block">
-                                    <Link
-                                      to={`/track-order?orderId=${encodeURIComponent(order.orderId)}`}
-                                      className="order-track-btn"
-                                    >
-                                      Track Shipment
-                                    </Link>
-                                    <button
-                                      className="order-cancel-btn"
-                                      disabled={statusClass === 'delivered' || statusClass === 'cancelled' || cancellingId === order.orderId}
-                                      onClick={() => handleCancelOrder(order.orderId)}
-                                    >
-                                      {cancellingId === order.orderId ? 'Cancelling...' : 'Cancel Order'}
-                                    </button>
-                                  </div>
+                                <div className="summary-detail-item">
+                                  <span className="detail-item-title">Delivery Address</span>
+                                  <span className="detail-item-desc">Customer Shipping Address (On File)</span>
                                 </div>
-
-                                {/* Right Section: Timeline Status */}
-                                <div className="expanded-panel timeline-panel">
-                                  <h4 className="panel-title">Order Progress</h4>
-                                  <OrderTimelineCompact status={order.status} />
+                                <div className="summary-detail-item">
+                                  <span className="detail-item-title">Payment Mode</span>
+                                  <span className="detail-item-desc">
+                                    {order.paymentMethod ? order.paymentMethod.replace(/_/g, ' ') : 'CREDIT CARD'}
+                                  </span>
                                 </div>
-
                               </div>
                             </div>
-                          </td>
-                        </tr>
+                          </div>
+                        </div>
                       )}
-                    </React.Fragment>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

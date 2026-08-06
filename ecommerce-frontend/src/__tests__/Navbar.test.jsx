@@ -144,11 +144,9 @@ describe('Navbar Component tests', () => {
     const catBtn = screen.getByRole('button', { name: /Open categories menu/i });
     fireEvent.click(catBtn);
 
-    await waitFor(() => {
-      const elecBtn = screen.getByRole('button', { name: 'Electronics' });
-      fireEvent.click(elecBtn);
-      expect(onCategoryChangeMock).toHaveBeenCalledWith('Electronics');
-    });
+    const elecBtn = await screen.findByRole('button', { name: 'Electronics' });
+    fireEvent.click(elecBtn);
+    expect(onCategoryChangeMock).toHaveBeenCalledWith('Electronics');
   });
 });
 
