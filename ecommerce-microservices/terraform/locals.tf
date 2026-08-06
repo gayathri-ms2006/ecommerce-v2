@@ -347,6 +347,10 @@ locals {
       integration_key = "inventory"
       route_key       = "GET /inventory/{productId}"
     }
+    "inventory_post" = {
+      integration_key = "inventory"
+      route_key       = "POST /inventory"
+    }
   }
 
   # AWS Lambda Permissions Map
