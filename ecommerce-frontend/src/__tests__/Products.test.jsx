@@ -193,4 +193,22 @@ describe('Products Page component tests', () => {
       productId: 'prod-101'
     }));
   });
+
+  test('filters products by category URL parameter', async () => {
+    fetchProductsList.mockResolvedValue({ success: true, data: mockProducts });
+    fetchProductInventory.mockResolvedValue({ success: true, data: { availableStock: 25 } });
+
+    render(
+      <MemoryRouter initialEntries={['/products?category=Computers']}>
+        <Products />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('MacBook Air M2')).toBeInTheDocument();
+      expect(screen.queryByText('iPhone 15 Pro')).not.toBeInTheDocument();
+      expect(screen.getByText('Showing 1 products')).toBeInTheDocument();
+    });
+  });
 });
+

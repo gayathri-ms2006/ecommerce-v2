@@ -41,6 +41,7 @@ const Products = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
+  const initialCategory = searchParams.get('category') || '';
 
   const { cartItems, addItemToCart, updateItemQuantity, removeItemFromCart } = useCart();
   const { wishlistItems, addWishlist, removeWishlist } = useWishlist();
@@ -53,12 +54,15 @@ const Products = () => {
   const [updatingCartId, setUpdatingCartId] = useState(null);
   const [toast, setToast] = useState({ message: '', type: '' });
   const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [sortBy, setSortBy] = useState('newest');
 
-  // Sync searchQuery when URL param changes
+  // Sync searchQuery and selectedCategory when URL params change
   useEffect(() => {
     const urlQuery = searchParams.get('search') || '';
     setSearchQuery(urlQuery);
+    const urlCategory = searchParams.get('category') || '';
+    setSelectedCategory(urlCategory);
   }, [searchParams]);
 
   const fetchProducts = async () => {
@@ -200,10 +204,23 @@ const Products = () => {
 
   const getFilteredAndSortedProducts = () => {
     const filtered = products.filter((product) => {
-      const query = searchQuery.toLowerCase();
-      const nameMatch = product.name ? product.name.toLowerCase().includes(query) : false;
-      const categoryMatch = product.category ? product.category.toLowerCase().includes(query) : false;
-      return nameMatch || categoryMatch;
+      if (selectedCategory && selectedCategory !== 'All Categories') {
+        const prodCat = product.category || 'General';
+        if (prodCat.toLowerCase() !== selectedCategory.toLowerCase()) {
+          return false;
+        }
+      }
+
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const nameMatch = product.name ? product.name.toLowerCase().includes(query) : false;
+        const categoryMatch = product.category ? product.category.toLowerCase().includes(query) : false;
+        if (!nameMatch && !categoryMatch) {
+          return false;
+        }
+      }
+
+      return true;
     });
 
     return filtered.sort((a, b) => {
@@ -218,10 +235,24 @@ const Products = () => {
 
   return (
     <div className="products-page-wrapper">
-      <Navbar searchQuery={searchQuery} onSearchChange={(val) => {
-        setSearchQuery(val);
-        setSearchParams(val ? { search: val } : {});
-      }} />
+      <Navbar 
+        searchQuery={searchQuery} 
+        onSearchChange={(val) => {
+          setSearchQuery(val);
+          const newParams = {};
+          if (val) newParams.search = val;
+          if (selectedCategory) newParams.category = selectedCategory;
+          setSearchParams(newParams);
+        }} 
+        selectedCategory={selectedCategory}
+        onCategoryChange={(cat) => {
+          setSelectedCategory(cat);
+          const newParams = {};
+          if (searchQuery) newParams.search = searchQuery;
+          if (cat) newParams.category = cat;
+          setSearchParams(newParams);
+        }}
+      />
 
       {toast.message && (
         <div className={`toast-notification-banner toast-${toast.type}`}>
@@ -243,8 +274,12 @@ const Products = () => {
             className="mobile-search-bar"
             value={searchQuery}
             onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setSearchParams(e.target.value ? { search: e.target.value } : {});
+              const val = e.target.value;
+              setSearchQuery(val);
+              const newParams = {};
+              if (val) newParams.search = val;
+              if (selectedCategory) newParams.category = selectedCategory;
+              setSearchParams(newParams);
             }}
           />
         </div>
@@ -287,8 +322,8 @@ const Products = () => {
         {!loading && !error && displayProducts.length === 0 && (
           <div className="catalog-empty-state">
             <p className="empty-message-text">No products found matching your search criteria.</p>
-            <button className="clear-search-btn" onClick={() => { setSearchQuery(''); setSearchParams({}); }}>
-              Clear Search
+            <button className="clear-search-btn" onClick={() => { setSearchQuery(''); setSelectedCategory(''); setSearchParams({}); }}>
+              Clear Filters
             </button>
           </div>
         )}

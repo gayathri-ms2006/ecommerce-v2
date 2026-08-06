@@ -21,6 +21,10 @@ jest.mock('../services/auth', () => ({
   getEmail: jest.fn(),
 }));
 
+jest.mock('../services/products', () => ({
+  fetchProductsList: jest.fn(),
+}));
+
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -28,6 +32,7 @@ import Navbar from '../components/Navbar';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { isAuthenticated, getName, logoutUser, getUsername, getEmail } from '../services/auth';
+import { fetchProductsList } from '../services/products';
 import { MemoryRouter } from 'react-router-dom';
 
 describe('Navbar Component tests', () => {
@@ -48,6 +53,13 @@ describe('Navbar Component tests', () => {
     getName.mockReturnValue('Gayathri M');
     getUsername.mockReturnValue('gayathri_m');
     getEmail.mockReturnValue('gayathri@example.com');
+    fetchProductsList.mockResolvedValue({
+      success: true,
+      data: [
+        { id: '1', category: 'Electronics' },
+        { id: '2', category: 'Clothing' },
+      ],
+    });
   });
 
   const renderComponent = () => {
@@ -105,4 +117,38 @@ describe('Navbar Component tests', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/login');
     });
   });
+
+  test('renders Categories dropdown and lists unique categories', async () => {
+    renderComponent();
+    
+    const catBtn = screen.getByRole('button', { name: /Open categories menu/i });
+    expect(catBtn).toBeInTheDocument();
+    
+    fireEvent.click(catBtn);
+    
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'All Categories' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Electronics' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Clothing' })).toBeInTheDocument();
+    });
+  });
+
+  test('calls onCategoryChange when a category is clicked', async () => {
+    const onCategoryChangeMock = jest.fn();
+    render(
+      <MemoryRouter>
+        <Navbar onCategoryChange={onCategoryChangeMock} />
+      </MemoryRouter>
+    );
+
+    const catBtn = screen.getByRole('button', { name: /Open categories menu/i });
+    fireEvent.click(catBtn);
+
+    await waitFor(() => {
+      const elecBtn = screen.getByRole('button', { name: 'Electronics' });
+      fireEvent.click(elecBtn);
+      expect(onCategoryChangeMock).toHaveBeenCalledWith('Electronics');
+    });
+  });
 });
+

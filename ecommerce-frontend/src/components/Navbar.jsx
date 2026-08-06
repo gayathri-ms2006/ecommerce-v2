@@ -3,9 +3,10 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { isAuthenticated, logoutUser, getEmail, getUsername, getName } from '../services/auth';
+import { fetchProductsList } from '../services/products';
 import '../styles/Navbar.css';
 
-const Navbar = ({ searchQuery = '', onSearchChange }) => {
+const Navbar = ({ searchQuery = '', onSearchChange, selectedCategory = '', onCategoryChange }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { cartCount, refreshCart } = useCart();
@@ -14,6 +15,65 @@ const Navbar = ({ searchQuery = '', onSearchChange }) => {
   const [userEmail, setUserEmail] = useState('');
   const [badgeAnimate, setBadgeAnimate] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  const [categories, setCategories] = useState([]);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+
+  // Close categories dropdown on outside clicks
+  useEffect(() => {
+    if (!categoriesOpen) return;
+
+    const handleOutsideClick = (event) => {
+      const catContainer = document.querySelector('.nav-categories-container');
+      if (catContainer && !catContainer.contains(event.target)) {
+        setCategoriesOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleOutsideClick);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [categoriesOpen]);
+
+  // Fetch unique categories dynamically from products
+  useEffect(() => {
+    let isMounted = true;
+    const loadCategories = async () => {
+      try {
+        const data = await fetchProductsList();
+        if (isMounted && data && data.success && Array.isArray(data.data)) {
+          const uniqueCategories = Array.from(
+            new Set(
+              data.data
+                .map((p) => p.category)
+                .filter(Boolean)
+                .map((c) => c.trim())
+            )
+          ).sort();
+          setCategories(uniqueCategories);
+        }
+      } catch (error) {
+        console.error('Failed to load categories for Navbar:', error);
+      }
+    };
+    loadCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleCategoryClick = (category) => {
+    setCategoriesOpen(false);
+    if (onCategoryChange) {
+      onCategoryChange(category);
+    } else {
+      const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
+      const categoryParam = category ? `category=${encodeURIComponent(category)}` : '';
+      const query = [categoryParam, searchParam].filter(Boolean).join('&');
+      navigate(`/products${query ? `?${query}` : ''}`);
+    }
+  };
 
   // Sync authentication state and decode user email on route change or load
   useEffect(() => {
@@ -31,6 +91,7 @@ const Navbar = ({ searchQuery = '', onSearchChange }) => {
       setUserEmail('');
     }
   }, [location, refreshCart, refreshWishlist]);
+
 
   // Close profile dropdown on outside clicks
   useEffect(() => {
@@ -107,6 +168,38 @@ const Navbar = ({ searchQuery = '', onSearchChange }) => {
 
         {/* Nav Navigation Links */}
         <div className="navbar-links">
+          {/* Categories Dropdown */}
+          <div className="nav-categories-container">
+            <button
+              className="nav-categories-button"
+              onClick={() => setCategoriesOpen((prev) => !prev)}
+              aria-label="Open categories menu"
+            >
+              <span>Categories</span>
+              <span className="categories-chevron">▾</span>
+            </button>
+
+            {categoriesOpen && (
+              <div className="categories-dropdown-menu">
+                <button
+                  className={`categories-dropdown-item ${!selectedCategory ? 'active' : ''}`}
+                  onClick={() => handleCategoryClick('')}
+                >
+                  All Categories
+                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    className={`categories-dropdown-item ${selectedCategory === cat ? 'active' : ''}`}
+                    onClick={() => handleCategoryClick(cat)}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <Link to="/products" className={getActiveCls('/products')}>
             Products
           </Link>
