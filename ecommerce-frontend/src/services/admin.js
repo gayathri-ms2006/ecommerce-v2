@@ -112,14 +112,30 @@ export const fetchAdminProducts = async () => {
 
 export const createAdminProduct = async (productData) => {
   const state = readState();
+  
+  // Format body specifically for POST /products database validator
+  const payload = {
+    name: productData.productName || productData.name || 'Untitled Product',
+    description: productData.description || 'No description provided',
+    price: Number(productData.price || 0),
+    category: productData.category || 'General',
+    imageUrl: productData.imageUrl || '',
+  };
+
+  const response = await apiRequest('/products', { method: 'POST', body: JSON.stringify(payload) }, true);
+  
+  // Extract generated UUID/ID from the backend response
+  const apiProduct = response?.data || response;
+  const createdProductId = apiProduct?.productId || apiProduct?.id || `prod-${Date.now()}`;
+
   const nextProduct = normalizeProduct({
     ...productData,
-    id: productData.id || `prod-${Date.now()}`,
-    productId: productData.productId || `prod-${Date.now()}`,
+    ...apiProduct,
+    id: createdProductId,
+    productId: createdProductId,
   }, state.products.length);
 
-  await apiRequest('/products', { method: 'POST', body: JSON.stringify(nextProduct) }, true);
-  await apiRequest(`/inventory/${nextProduct.productId}`, {
+  await apiRequest(`/inventory/${createdProductId}`, {
     method: 'PATCH',
     body: JSON.stringify({ stockQuantity: nextProduct.stockQuantity })
   }, true);
@@ -140,7 +156,16 @@ export const updateAdminProduct = async (productId, updates) => {
 
   const updated = normalizeProduct({ ...state.products[index], ...updates, id: state.products[index].id, productId: state.products[index].productId }, index);
 
-  await apiRequest(`/products/${productId}`, { method: 'PUT', body: JSON.stringify(updated) }, true);
+  // Format body specifically for PUT /products/:productId database validator
+  const payload = {
+    name: updated.productName || updated.name,
+    description: updated.description || 'No description provided',
+    price: Number(updated.price || 0),
+    category: updated.category || 'General',
+    imageUrl: updated.imageUrl || '',
+  };
+
+  await apiRequest(`/products/${productId}`, { method: 'PUT', body: JSON.stringify(payload) }, true);
   if (updates.stockQuantity !== undefined) {
     await apiRequest(`/inventory/${updated.productId}`, {
       method: 'PATCH',
