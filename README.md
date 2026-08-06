@@ -73,9 +73,23 @@ graph TD
 
 * **Frontend**: React (Vite), React Router v6, Context API, Vanilla CSS, Jest.
 * **Backend Microservices**: Node.js, AWS Lambda (HTTP API Gateway proxy), Amazon DynamoDB, Joi schema validation.
-* **Infrastructure as Code**: Terraform (Dynamic DRY mappings, CloudWatch dashboards, SNS alerting).
-* **Observability**: AWS Distro for OpenTelemetry (ADOT) layer for Lambda tracing & X-Ray service maps.
+* **Infrastructure as Code (IaC)**: Terraform (creates DynamoDB tables, Lambda functions, API Gateway integration, CloudFront distribution, CloudWatch resources, SNS alerts).
+* **Observability (OTel Traces)**: AWS Distro for OpenTelemetry (ADOT) layer for Lambda to automatically trace requests across microservices.
 * **CI/CD**: GitHub Actions (17 workflows for automated tests and deployments), SonarCloud, and Snyk security scans.
+
+---
+
+## 📊 Observability & Monitoring
+
+### 🔍 What are OTel Traces?
+**OTel (OpenTelemetry) Traces** represent the end-to-end journey of a request as it flows through the system (e.g., when a checkout request goes from API Gateway to the Order Lambda, which in turn calls the Inventory and Payment Lambdas). These traces are sent to AWS X-Ray via the ADOT Lambda Layer to visualize latency bottlenecks and debug errors across service boundaries.
+
+### 📈 CloudWatch Dashboard & Alarms
+Terraform automatically provisions a central CloudWatch Dashboard (`cloudwatch-dashboard.tf`) to monitor:
+* API Gateway HTTP requests, latency, and 4xx/5xx errors.
+* Lambda invocations, execution duration, errors, and throttles.
+* DynamoDB read/write consumption and system errors.
+* CloudWatch Alarms that automatically trigger notifications via an SNS topic (`sns-alerts.tf`) if error rates or latency breach defined thresholds.
 
 ---
 
@@ -97,43 +111,18 @@ ecommerce-v2/
 
 ---
 
-## 🧩 Microservices Catalog
+## 🚀 Deployment Guide
 
-| Service | Route Base | Table Name | Purpose |
-|---|---|---|---|
-| **Product** | `/products` | `product-{owner}` | Catalog lookup & inventory details |
-| **Cart** | `/cart` | `cart-{owner}` | Shopping cart storage |
-| **Inventory**| `/inventory`| `inventory-{owner}`| Product stock availability |
-| **Wishlist** | `/wishlist` | `wishlist` | User's favorite products list |
-| **Payment** | `/payments` | `payment-{owner}` | simulated checkouts & refunds |
-| **Order** | `/orders` | `order-{owner}` | Checkout coordination & tracking |
+### 1. Provision Infrastructure & Dashboards (Terraform)
+Since `terraform.tfvars` is already configured in the repository, you do not need to copy or create it. Deploy all AWS resources (DynamoDB tables, Lambdas, API Gateway, CDN, CloudWatch Dashboard, and Alarms) by running:
 
----
-
-## ⚡ Setup & Deployment
-
-### Local Development
-
-#### 💻 Frontend client
-```bash
-cd ecommerce-frontend
-npm install
-npm run dev   # Runs on http://localhost:5173
-npm test      # Run frontend unit tests
-```
-
-#### ⚙️ Microservices (e.g. Product Service)
-```bash
-cd ecommerce-microservices/product-service
-npm install
-npm test      # Run service unit tests
-```
-
-### ☁️ AWS Cloud Deployment (Terraform)
 ```bash
 cd ecommerce-microservices/terraform
-cp terraform.tfvars.example terraform.tfvars # Set your custom resource_owner value
 terraform init
-terraform plan
 terraform apply
 ```
+
+### 2. CI/CD Pipeline (GitHub Actions)
+Once the base infrastructure is deployed via Terraform, the codebase is continuously deployed via GitHub Actions:
+* **Frontend**: Code pushes to `ecommerce-frontend/` trigger `deploy-frontend.yml` which builds the React app, syncs it to S3, and invalidates the CloudFront cache.
+* **Microservices**: Code pushes to any service directory (e.g. `product-service/`) run unit tests and automatically update the corresponding AWS Lambda function code using the AWS CLI.
