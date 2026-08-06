@@ -425,7 +425,11 @@ const Products = () => {
                     {isWishlisted ? '❤️' : '🤍'}
                   </button>
 
-                  <div className="card-image-box" onClick={() => navigate(`/product/${prodId}`)}>
+                  <div
+                    className="card-image-box"
+                    onClick={() => navigate(`/product/${prodId}`)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/product/${prodId}`); }}
+                  >
                     {product.imageUrl ? (
                       <img
                         src={product.imageUrl}
@@ -445,7 +449,11 @@ const Products = () => {
                   </div>
 
                   <div className="card-body-details">
-                    <div className="card-top-info" onClick={() => navigate(`/product/${prodId}`)}>
+                    <div
+                      className="card-top-info"
+                      onClick={() => navigate(`/product/${prodId}`)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/product/${prodId}`); }}
+                    >
                       <div className="card-category-and-stock">
                         <span className="card-category-label">{product.category || 'General'}</span>
 

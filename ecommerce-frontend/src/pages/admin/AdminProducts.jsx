@@ -234,7 +234,13 @@ const AdminProducts = () => {
 
       {/* Slide-out Add/Edit Product Drawer */}
       {drawerOpen && (
-        <div className="admin-drawer-overlay" onClick={(e) => { if (e.target.className === 'admin-drawer-overlay') resetForm(); }}>
+        <div
+          className="admin-drawer-overlay"
+          onClick={(e) => { if (e.target.className === 'admin-drawer-overlay') resetForm(); }}
+          onKeyDown={(e) => { if (e.target.className === 'admin-drawer-overlay' && (e.key === 'Enter' || e.key === ' ')) resetForm(); }}
+          role="button"
+          tabIndex={0}
+        >
           <div className="admin-drawer">
             <div className="admin-drawer-header">
               <h3>{editingId ? 'Edit Product' : 'Add New Product'}</h3>

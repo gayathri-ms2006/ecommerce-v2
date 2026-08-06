@@ -171,7 +171,11 @@ const Wishlist = () => {
               
               return (
                 <article key={prodId} className="wishlist-item-card">
-                  <div className="wishlist-image-box" onClick={() => navigate(`/product/${prodId}`)}>
+                  <div
+                    className="wishlist-image-box"
+                    onClick={() => navigate(`/product/${prodId}`)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/product/${prodId}`); }}
+                  >
                     {imageUrl ? (
                       <img
                         src={imageUrl}
