@@ -53,16 +53,20 @@ const AdminInventory = () => {
           (p) => String(p.productId || p.id) === String(id)
         );
 
+        if (!matchingProduct) {
+          return null;
+        }
+
         return {
           id,
           productId: id,
-          productName: matchingProduct?.productName || matchingProduct?.name || item.productName || item.name || id,
-          sku: matchingProduct?.sku || item.sku || `SKU-${String(index + 1).padStart(3, '0')}`,
-          category: matchingProduct?.category || item.category || 'General',
-          price: Number(matchingProduct?.price || item.price || 0),
+          productName: matchingProduct.productName || matchingProduct.name || id,
+          sku: matchingProduct.sku || item.sku || `SKU-${String(index + 1).padStart(3, '0')}`,
+          category: matchingProduct.category || item.category || 'General',
+          price: Number(matchingProduct.price || 0),
           stockQuantity,
         };
-      });
+      }).filter(Boolean);
 
       setInventory(normalized);
     } catch (err) {

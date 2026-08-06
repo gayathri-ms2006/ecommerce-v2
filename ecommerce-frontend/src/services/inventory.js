@@ -58,6 +58,21 @@ export const updateInventory = async (
       false
     );
   } catch (error) {
+    if (error.message?.includes('not found') || error.message?.includes('NOT_FOUND')) {
+      return await apiRequest(
+        '/inventory',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            productId,
+            availableStock: quantity,
+            lowStockThreshold: 5,
+            warehouseLocation: 'Main Warehouse',
+          }),
+        },
+        false
+      );
+    }
     console.error(
       `Error updating inventory for product ${productId}:`,
       error

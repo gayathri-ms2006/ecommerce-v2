@@ -172,10 +172,26 @@ export const updateAdminProduct = async (productId, updates) => {
 
   await apiRequest(`/products/${productId}`, { method: 'PUT', body: JSON.stringify(payload) }, true);
   if (updates.stockQuantity !== undefined) {
-    await apiRequest(`/inventory/${updated.productId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ availableStock: Number(updates.stockQuantity || 0) })
-    }, true);
+    try {
+      await apiRequest(`/inventory/${updated.productId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ availableStock: Number(updates.stockQuantity || 0) })
+      }, true);
+    } catch (error) {
+      if (error.message?.includes('not found') || error.message?.includes('NOT_FOUND')) {
+        await apiRequest('/inventory', {
+          method: 'POST',
+          body: JSON.stringify({
+            productId: updated.productId,
+            availableStock: Number(updates.stockQuantity || 0),
+            lowStockThreshold: 5,
+            warehouseLocation: 'Main Warehouse'
+          })
+        }, true);
+      } else {
+        throw error;
+      }
+    }
   }
 
   state.products[index] = updated;
@@ -210,7 +226,23 @@ export const updateAdminInventory = async (productId, quantity) => {
 
   const nextQuantity = Math.max(0, Number(quantity));
 
-  await apiRequest(`/inventory/${productId}`, { method: 'PUT', body: JSON.stringify({ availableStock: nextQuantity }) }, true);
+  try {
+    await apiRequest(`/inventory/${productId}`, { method: 'PUT', body: JSON.stringify({ availableStock: nextQuantity }) }, true);
+  } catch (error) {
+    if (error.message?.includes('not found') || error.message?.includes('NOT_FOUND')) {
+      await apiRequest('/inventory', {
+        method: 'POST',
+        body: JSON.stringify({
+          productId: productId,
+          availableStock: nextQuantity,
+          lowStockThreshold: 5,
+          warehouseLocation: 'Main Warehouse'
+        })
+      }, true);
+    } else {
+      throw error;
+    }
+  }
 
   state.products[index] = normalizeProduct({ ...state.products[index], stockQuantity: nextQuantity, status: nextQuantity > 0 ? 'Active' : 'Out of Stock' }, index);
   writeState(state);
