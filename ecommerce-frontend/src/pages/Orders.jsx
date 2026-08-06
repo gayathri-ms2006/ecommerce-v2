@@ -171,26 +171,7 @@ const Orders = () => {
     return match ? match.imageUrl : '';
   }, [catalogProducts]);
 
-  // Compute KPI statistics
-  const stats = useMemo(() => {
-    let total = orders.length;
-    let processing = 0;
-    let delivered = 0;
-    let cancelled = 0;
 
-    orders.forEach(order => {
-      const status = (order.status || '').toUpperCase();
-      if (['PENDING', 'PROCESSING', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY'].includes(status)) {
-        processing++;
-      } else if (status === 'DELIVERED') {
-        delivered++;
-      } else if (status === 'CANCELLED') {
-        cancelled++;
-      }
-    });
-
-    return { total, processing, delivered, cancelled };
-  }, [orders]);
 
   // Filter and Sort orders
   const filteredOrders = useMemo(() => {
@@ -271,38 +252,6 @@ const Orders = () => {
 
         {!loading && !error && orders.length > 0 && (
           <>
-            {/* KPI Cards Row */}
-            <div className="orders-kpi-row">
-              <div className="orders-kpi-card total">
-                <div className="orders-kpi-icon">📦</div>
-                <div className="orders-kpi-info">
-                  <span className="orders-kpi-label">Total Orders</span>
-                  <strong className="orders-kpi-value">{stats.total}</strong>
-                </div>
-              </div>
-              <div className="orders-kpi-card processing">
-                <div className="orders-kpi-icon">⏳</div>
-                <div className="orders-kpi-info">
-                  <span className="orders-kpi-label">Processing</span>
-                  <strong className="orders-kpi-value">{stats.processing}</strong>
-                </div>
-              </div>
-              <div className="orders-kpi-card delivered">
-                <div className="orders-kpi-icon">✅</div>
-                <div className="orders-kpi-info">
-                  <span className="orders-kpi-label">Delivered</span>
-                  <strong className="orders-kpi-value">{stats.delivered}</strong>
-                </div>
-              </div>
-              <div className="orders-kpi-card cancelled">
-                <div className="orders-kpi-icon">✕</div>
-                <div className="orders-kpi-info">
-                  <span className="orders-kpi-label">Cancelled</span>
-                  <strong className="orders-kpi-value">{stats.cancelled}</strong>
-                </div>
-              </div>
-            </div>
-
             {/* Filter and Search Bar */}
             <div className="orders-toolbar-bar">
               <div className="orders-search-wrapper">
