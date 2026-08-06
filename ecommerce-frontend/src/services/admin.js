@@ -135,9 +135,14 @@ export const createAdminProduct = async (productData) => {
     productId: createdProductId,
   }, state.products.length);
 
-  await apiRequest(`/inventory/${createdProductId}`, {
-    method: 'PUT',
-    body: JSON.stringify({ availableStock: Number(nextProduct.stockQuantity || 0) })
+  await apiRequest('/inventory', {
+    method: 'POST',
+    body: JSON.stringify({
+      productId: createdProductId,
+      availableStock: Number(nextProduct.stockQuantity || 0),
+      lowStockThreshold: 5,
+      warehouseLocation: 'Main Warehouse',
+    })
   }, true);
 
   state.products = [nextProduct, ...state.products];
