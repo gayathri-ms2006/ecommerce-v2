@@ -11,6 +11,7 @@ jest.mock('../services/cart', () => ({
   addToCart: jest.fn(),
   removeFromCart: jest.fn(),
   updateCartQuantity: jest.fn(),
+  clearCart: jest.fn(),
 }));
 
 jest.mock('../services/auth', () => ({
@@ -147,7 +148,9 @@ describe('CartContext provider tests', () => {
     });
   });
 
-  test('performs clearCart local reset', async () => {
+  test('performs clearCart operation and deletes all items from backend and local store', async () => {
+    const { clearCart } = require('../services/cart');
+    clearCart.mockResolvedValue({ success: true });
     getCartItems.mockResolvedValue([{ productId: 'p-1', quantity: 3, price: 100 }]);
 
     renderProvider();
@@ -159,7 +162,10 @@ describe('CartContext provider tests', () => {
     const clearBtn = screen.getByText('Clear Cart');
     fireEvent.click(clearBtn);
 
-    expect(screen.getByTestId('cart-count')).toHaveTextContent('0');
-    expect(screen.getByTestId('items-count')).toHaveTextContent('0');
+    await waitFor(() => {
+      expect(clearCart).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('cart-count')).toHaveTextContent('0');
+      expect(screen.getByTestId('items-count')).toHaveTextContent('0');
+    });
   });
 });

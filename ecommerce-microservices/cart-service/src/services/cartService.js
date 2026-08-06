@@ -37,6 +37,14 @@ class CartService {
     return { userId, productId, removed: true };
   }
 
+  async clearCart(userId) {
+    const items = await cartRepository.getByUser(userId) || [];
+    for (const item of items) {
+      await cartRepository.delete(userId, item.productId);
+    }
+    return { userId, cleared: true };
+  }
+
   async getCart(userId) {
     return await cartRepository.getByUser(userId);
   }

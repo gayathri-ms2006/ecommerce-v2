@@ -57,7 +57,7 @@ module.exports.handler = async (event) => {
         return response.success(result, 200);
       }
 
-      // Remove Cart Item
+      // Remove Cart Item or Clear Cart
       case "DELETE": {
 
         const body = event.body ? JSON.parse(event.body) : {};
@@ -65,11 +65,15 @@ module.exports.handler = async (event) => {
         const validatedData =
           cartValidator.validateRemove(body);
 
-        const result =
-          await cartService.removeCart(
+        let result;
+        if (validatedData.productId) {
+          result = await cartService.removeCart(
             validatedData.userId,
             validatedData.productId
           );
+        } else {
+          result = await cartService.clearCart(validatedData.userId);
+        }
 
         return response.success(result, 200);
       }

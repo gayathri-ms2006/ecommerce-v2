@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getCartItems, addToCart, removeFromCart as deleteFromCart, updateCartQuantity } from '../services/cart';
+import { getCartItems, addToCart, removeFromCart as deleteFromCart, updateCartQuantity, clearCart as apiClearCart } from '../services/cart';
 import { isAuthenticated } from '../services/auth';
 
 const CartContext = createContext(null);
@@ -93,9 +93,17 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const clearCart = useCallback(() => {
-    setCartItems([]);
-    setCartCount(0);
+  const clearCart = useCallback(async () => {
+    try {
+      setError(null);
+      await apiClearCart();
+      setCartItems([]);
+      setCartCount(0);
+    } catch (err) {
+      console.error('Error clearing cart:', err);
+      setError(err.message || 'Failed to clear cart.');
+      throw err;
+    }
   }, []);
 
   useEffect(() => {

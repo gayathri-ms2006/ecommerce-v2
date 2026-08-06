@@ -260,4 +260,52 @@ describe("CartService", () => {
       expect(cartRepository.getByUser).toHaveBeenCalledWith(userId);
     });
   });
+
+  describe("clearCart", () => {
+    it("should delete all items from user's cart", async () => {
+      // Arrange
+      const userCartItems = [
+        { productId: "p1", userId },
+        { productId: "p2", userId }
+      ];
+      cartRepository.getByUser.mockResolvedValue(userCartItems);
+      cartRepository.delete.mockResolvedValue(true);
+
+      // Act
+      const result = await cartService.clearCart(userId);
+
+      // Assert
+      expect(cartRepository.getByUser).toHaveBeenCalledWith(userId);
+      expect(cartRepository.delete).toHaveBeenCalledTimes(2);
+      expect(cartRepository.delete).toHaveBeenNthCalledWith(1, userId, "p1");
+      expect(cartRepository.delete).toHaveBeenNthCalledWith(2, userId, "p2");
+      expect(result).toEqual({ userId, cleared: true });
+    });
+
+    it("should handle empty cart safely", async () => {
+      // Arrange
+      cartRepository.getByUser.mockResolvedValue([]);
+
+      // Act
+      const result = await cartService.clearCart(userId);
+
+      // Assert
+      expect(cartRepository.getByUser).toHaveBeenCalledWith(userId);
+      expect(cartRepository.delete).not.toHaveBeenCalled();
+      expect(result).toEqual({ userId, cleared: true });
+    });
+
+    it("should handle null response from repository safely", async () => {
+      // Arrange
+      cartRepository.getByUser.mockResolvedValue(null);
+
+      // Act
+      const result = await cartService.clearCart(userId);
+
+      // Assert
+      expect(cartRepository.getByUser).toHaveBeenCalledWith(userId);
+      expect(cartRepository.delete).not.toHaveBeenCalled();
+      expect(result).toEqual({ userId, cleared: true });
+    });
+  });
 });

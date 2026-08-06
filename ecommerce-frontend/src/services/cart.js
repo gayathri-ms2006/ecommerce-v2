@@ -110,3 +110,28 @@ export const updateCartQuantity = async (
     throw error;
   }
 };
+
+/**
+ * Clear all items from cart
+ */
+export const clearCart = async () => {
+  try {
+    const userId = getUserId();
+
+    const body = {
+      userId,
+    };
+
+    return await apiRequest(
+      '/cart',
+      {
+        method: 'DELETE',
+        body: JSON.stringify(body),
+      },
+      true
+    );
+  } catch (error) {
+    console.error('Error clearing cart:', error);
+    throw error;
+  }
+};

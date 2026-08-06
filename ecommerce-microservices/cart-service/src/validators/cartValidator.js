@@ -45,7 +45,7 @@ const removeCartSchema = Joi.object({
 
   productId: Joi.string()
     .uuid()
-    .required(),
+    .optional(),
 });
 
 const validate = (schema, data) => {
