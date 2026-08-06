@@ -75,17 +75,48 @@ graph TD
 
 ## 🚀 CI/CD Pipeline
 
-Continuous Integration and Deployment are managed via **17 separate GitHub Actions workflows**:
+Continuous integration and deployment are managed via independent workflows to keep checks and deployments isolated.
 
 ### Frontend Pipeline
-```text
-GitHub Actions ──> Unit Tests (Jest) ──> Vite Build ──> Upload to S3 ──> CloudFront Invalidation
+
+Automated build and deployment flow for the React SPA:
+
+```mermaid
+graph TD
+    A[Push to Frontend Code] --> B[Frontend Tests (Jest)]
+    B --> C[Vite Build]
+    C --> D[Amazon S3 Upload]
+    D --> E[CloudFront Cache Invalidation]
+    E --> F[Production Deployment]
 ```
 
 ### Backend Pipeline
-```text
-GitHub Actions ──> Unit Tests (Jest) ──> SonarCloud Scan ──> Snyk Scan ──> AWS Lambda Update
+
+Automated testing and isolated deployment per microservice:
+
+```mermaid
+graph TD
+    A[Push to Service Code] --> B[Service Unit Tests]
+    B --> C[AWS Lambda Deployment]
 ```
+
+### Code Quality & Security (DevSecOps)
+
+Static analysis and security checking run independently of the deployment pipelines on integration events:
+
+```mermaid
+graph TD
+    subgraph "Code Quality (SonarCloud)"
+        PR[Push / Pull Request] --> SC[SonarCloud Analysis]
+        SC --> Q[Code Quality & Maintainability Checks]
+    end
+
+    subgraph "Security Scanning (Snyk)"
+        Dep[Push / Dependency / Terraform Changes] --> Snyk[Snyk Security Scan]
+        Snyk --> V[Dependency & IaC Vulnerability Analysis]
+    end
+```
+
 
 ---
 
