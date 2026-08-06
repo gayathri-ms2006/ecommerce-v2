@@ -52,7 +52,7 @@ export const updateInventory = async (
       {
         method: 'PUT',
         body: JSON.stringify({
-          quantity,
+          availableStock: quantity,
         }),
       },
       false
