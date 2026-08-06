@@ -83,7 +83,7 @@ Automated build and deployment flow for the React SPA:
 
 ```mermaid
 graph TD
-    A[Push to Frontend Code] --> B[Frontend Tests (Jest)]
+    A[Push to Frontend Code] --> B["Frontend Tests (Jest)"]
     B --> C[Vite Build]
     C --> D[Amazon S3 Upload]
     D --> E[CloudFront Cache Invalidation]
