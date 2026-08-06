@@ -333,7 +333,7 @@ const Orders = () => {
 
                   return (
                     <div key={order.orderId} className={`order-card-box ${isExpanded ? 'card-expanded' : ''}`}>
-                      {/* Card Header */}
+                      {/* Card Header (Summary Bar) */}
                       <div className="order-card-header">
                         <div className="header-meta-details">
                           <div className="meta-block">
@@ -350,124 +350,120 @@ const Orders = () => {
                               {formatPrice(order.totalAmount || order.price)}
                             </strong>
                           </div>
-                          <div className="meta-block desktop-only">
-                            <span className="meta-title">Payment Method</span>
-                            <span className="payment-method-tag">
-                              {order.paymentMethod ? order.paymentMethod.replace(/_/g, ' ') : 'CREDIT CARD'}
-                            </span>
-                          </div>
                         </div>
-                        <div className="header-status-badge">
+                        <div className="header-status-and-action" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                           <span className={`status-badge status-${statusClass}`}>
                             {statusLabel}
                           </span>
-                        </div>
-                      </div>
-
-                      {/* Card Body */}
-                      <div className="order-card-body">
-                        <div className="order-products-scroller">
-                          {(order.products || []).map((prod, idx) => {
-                            const img = getProductImage(prod.productId);
-                            return (
-                              <div key={prod.productId || idx} className="order-product-item-row">
-                                <div className="order-product-img-box">
-                                  {img ? (
-                                    <img src={img} alt={prod.productName} className="order-product-img" />
-                                  ) : (
-                                    <div className="order-product-img-placeholder">📦</div>
-                                  )}
-                                </div>
-                                <div className="order-product-meta">
-                                  <h4 className="order-product-name">{prod.productName || 'E-Shop Product'}</h4>
-                                  <div className="order-product-qty-row">
-                                    <span className="order-product-qty">Qty: {prod.quantity || 1}</span>
-                                    <span className="order-product-price">
-                                      {formatPrice(prod.price * (prod.quantity || 1))}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                          {(!order.products || order.products.length === 0) && (
-                            <div className="order-product-item-row">
-                              <div className="order-product-img-box">
-                                <div className="order-product-img-placeholder">📦</div>
-                              </div>
-                              <div className="order-product-meta">
-                                <h4 className="order-product-name">{order.productName || 'E-Shop Product'}</h4>
-                                <div className="order-product-qty-row">
-                                  <span className="order-product-qty">Qty: 1</span>
-                                  <span className="order-product-price">{formatPrice(order.price || 0)}</span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="order-delivery-estimate-box">
-                          <span className="estimate-label">Delivery Estimate:</span>
-                          <strong className="estimate-value">Standard Transit (3-5 Business Days)</strong>
-                        </div>
-                      </div>
-
-                      {/* Card Actions Footer */}
-                      <div className="order-card-actions-bar">
-                        <div className="actions-left-links">
-                          <Link
-                            to={`/track-order?orderId=${encodeURIComponent(order.orderId)}`}
-                            className="btn-track-shipment"
-                          >
-                            Track Order
-                          </Link>
-                          <button
-                            className="btn-cancel-order"
-                            disabled={statusClass === 'delivered' || statusClass === 'cancelled' || cancellingId === order.orderId}
-                            onClick={() => handleCancelOrder(order.orderId)}
-                          >
-                            {cancellingId === order.orderId ? 'Cancelling...' : 'Cancel Order'}
-                          </button>
-                        </div>
-                        <div className="actions-right-toggle">
                           <button
                             className="btn-toggle-details-accordion"
                             onClick={() => toggleOrderExpand(order.orderId)}
+                            style={{ margin: 0 }}
                           >
                             {isExpanded ? 'Hide Details ▲' : 'View Details ▼'}
                           </button>
                         </div>
                       </div>
 
-                      {/* Expanded Section (Details, Live Tracking) */}
+                      {/* Expanded Section (Details, Products, Actions) */}
                       {isExpanded && (
-                        <div className="order-card-expanded-drawer">
-                          <div className="expanded-drawer-grid">
-                            <div className="expanded-section-panel tracking-timeline-panel">
-                              <h4 className="expanded-panel-title">Fulfillment Progress</h4>
-                              <OrderTimelineCompact status={order.status} />
+                        <>
+                          {/* Card Body */}
+                          <div className="order-card-body">
+                            <div className="order-products-scroller">
+                              {(order.products || []).map((prod, idx) => {
+                                const img = getProductImage(prod.productId);
+                                return (
+                                  <div key={prod.productId || idx} className="order-product-item-row">
+                                    <div className="order-product-img-box">
+                                      {img ? (
+                                        <img src={img} alt={prod.productName} className="order-product-img" />
+                                      ) : (
+                                        <div className="order-product-img-placeholder">📦</div>
+                                      )}
+                                    </div>
+                                    <div className="order-product-meta">
+                                      <h4 className="order-product-name">{prod.productName || 'E-Shop Product'}</h4>
+                                      <div className="order-product-qty-row">
+                                        <span className="order-product-qty">Qty: {prod.quantity || 1}</span>
+                                        <span className="order-product-price">
+                                          {formatPrice(prod.price * (prod.quantity || 1))}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              {(!order.products || order.products.length === 0) && (
+                                <div className="order-product-item-row">
+                                  <div className="order-product-img-box">
+                                    <div className="order-product-img-placeholder">📦</div>
+                                  </div>
+                                  <div className="order-product-meta">
+                                    <h4 className="order-product-name">{order.productName || 'E-Shop Product'}</h4>
+                                    <div className="order-product-qty-row">
+                                      <span className="order-product-qty">Qty: 1</span>
+                                      <span className="order-product-price">{formatPrice(order.price || 0)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                            <div className="expanded-section-panel delivery-summary-panel">
-                              <h4 className="expanded-panel-title">Shipping & Invoice Details</h4>
-                              <div className="delivery-summary-details-box">
-                                <div className="summary-detail-item">
-                                  <span className="detail-item-title">Courier Partner</span>
-                                  <span className="detail-item-desc">E-Shop Premium Express</span>
-                                </div>
-                                <div className="summary-detail-item">
-                                  <span className="detail-item-title">Delivery Address</span>
-                                  <span className="detail-item-desc">Customer Shipping Address (On File)</span>
-                                </div>
-                                <div className="summary-detail-item">
-                                  <span className="detail-item-title">Payment Mode</span>
-                                  <span className="detail-item-desc">
-                                    {order.paymentMethod ? order.paymentMethod.replace(/_/g, ' ') : 'CREDIT CARD'}
-                                  </span>
+
+                            <div className="order-delivery-estimate-box">
+                              <span className="estimate-label">Delivery Estimate:</span>
+                              <strong className="estimate-value">Standard Transit (3-5 Business Days)</strong>
+                            </div>
+                          </div>
+
+                          {/* Expanded Section (Details, Live Tracking) */}
+                          <div className="order-card-expanded-drawer" style={{ borderTop: 'none' }}>
+                            <div className="expanded-drawer-grid">
+                              <div className="expanded-section-panel tracking-timeline-panel">
+                                <h4 className="expanded-panel-title">Fulfillment Progress</h4>
+                                <OrderTimelineCompact status={order.status} />
+                              </div>
+                              <div className="expanded-section-panel delivery-summary-panel">
+                                <h4 className="expanded-panel-title">Shipping & Invoice Details</h4>
+                                <div className="delivery-summary-details-box">
+                                  <div className="summary-detail-item">
+                                    <span className="detail-item-title">Courier Partner</span>
+                                    <span className="detail-item-desc">E-Shop Premium Express</span>
+                                  </div>
+                                  <div className="summary-detail-item">
+                                    <span className="detail-item-title">Delivery Address</span>
+                                    <span className="detail-item-desc">Customer Shipping Address (On File)</span>
+                                  </div>
+                                  <div className="summary-detail-item">
+                                    <span className="detail-item-title">Payment Mode</span>
+                                    <span className="detail-item-desc">
+                                      {order.paymentMethod ? order.paymentMethod.replace(/_/g, ' ') : 'CREDIT CARD'}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        </div>
+
+                          {/* Card Actions Footer */}
+                          <div className="order-card-actions-bar" style={{ borderTop: '1px solid var(--border-color)' }}>
+                            <div className="actions-left-links">
+                              <Link
+                                to={`/track-order?orderId=${encodeURIComponent(order.orderId)}`}
+                                className="btn-track-shipment"
+                              >
+                                Track Order
+                              </Link>
+                              <button
+                                className="btn-cancel-order"
+                                disabled={statusClass === 'delivered' || statusClass === 'cancelled' || cancellingId === order.orderId}
+                                onClick={() => handleCancelOrder(order.orderId)}
+                              >
+                                {cancellingId === order.orderId ? 'Cancelling...' : 'Cancel Order'}
+                              </button>
+                            </div>
+                          </div>
+                        </>
                       )}
                     </div>
                   );
