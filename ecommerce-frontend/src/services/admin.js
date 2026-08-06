@@ -136,8 +136,8 @@ export const createAdminProduct = async (productData) => {
   }, state.products.length);
 
   await apiRequest(`/inventory/${createdProductId}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ stockQuantity: nextProduct.stockQuantity })
+    method: 'PUT',
+    body: JSON.stringify({ quantity: Number(nextProduct.stockQuantity || 0) })
   }, true);
 
   state.products = [nextProduct, ...state.products];
@@ -168,8 +168,8 @@ export const updateAdminProduct = async (productId, updates) => {
   await apiRequest(`/products/${productId}`, { method: 'PUT', body: JSON.stringify(payload) }, true);
   if (updates.stockQuantity !== undefined) {
     await apiRequest(`/inventory/${updated.productId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ stockQuantity: Number(updates.stockQuantity) })
+      method: 'PUT',
+      body: JSON.stringify({ quantity: Number(updates.stockQuantity || 0) })
     }, true);
   }
 
@@ -205,7 +205,7 @@ export const updateAdminInventory = async (productId, quantity) => {
 
   const nextQuantity = Math.max(0, Number(quantity));
 
-  await apiRequest(`/inventory/${productId}`, { method: 'PATCH', body: JSON.stringify({ stockQuantity: nextQuantity }) }, true);
+  await apiRequest(`/inventory/${productId}`, { method: 'PUT', body: JSON.stringify({ quantity: nextQuantity }) }, true);
 
   state.products[index] = normalizeProduct({ ...state.products[index], stockQuantity: nextQuantity, status: nextQuantity > 0 ? 'Active' : 'Out of Stock' }, index);
   writeState(state);
