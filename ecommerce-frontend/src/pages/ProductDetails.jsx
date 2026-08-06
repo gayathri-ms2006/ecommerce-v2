@@ -208,7 +208,8 @@ const ProductDetails = () => {
     ];
   }, [product]);
 
-  const oldPrice = product ? Math.floor(product.price * 1.25) : 0;
+  const discount = product ? (product.discount !== undefined ? Number(product.discount) : 0) : 0;
+  const oldPrice = product && discount > 0 ? Math.round(product.price / (1 - discount / 100)) : 0;
   const rating = product ? Number(product.rating || 4.5) : 4.4;
   const reviewCount = product ? Number(product.reviewCount || 128) : 120;
   const hasStock = stock > 0;
@@ -309,8 +310,12 @@ const ProductDetails = () => {
 
             <div className="details-price-row">
               <span className="details-price-current">{formatPrice(product.price)}</span>
-              <span className="details-price-old">{formatPrice(oldPrice)}</span>
-              <span className="details-price-discount">20% OFF</span>
+              {discount > 0 && (
+                <>
+                  <span className="details-price-old">{formatPrice(oldPrice)}</span>
+                  <span className="details-price-discount">{discount}% OFF</span>
+                </>
+              )}
             </div>
 
             {inventoryLoading ? (
@@ -392,7 +397,8 @@ const ProductDetails = () => {
               {similarProducts.map((sim, idx) => {
                 const simId = sim.productId || sim.id;
                 const badge = getBadgeType(idx, sim.price);
-                const oldSimPrice = Math.floor(sim.price * 1.25);
+                const simDiscount = sim.discount !== undefined ? Number(sim.discount) : 0;
+                const oldSimPrice = simDiscount > 0 ? Math.round(sim.price / (1 - simDiscount / 100)) : 0;
                 return (
                   <article
                     key={simId}
@@ -416,7 +422,12 @@ const ProductDetails = () => {
                         <p className="card-description-para">{sim.description}</p>
                         <div className="card-pricing-block" style={{ marginTop: 'auto' }}>
                           <span className="pricing-current">{formatPrice(sim.price)}</span>
-                          <span className="pricing-old">{formatPrice(oldSimPrice)}</span>
+                          {simDiscount > 0 && (
+                            <>
+                              <span className="pricing-old">{formatPrice(oldSimPrice)}</span>
+                              <span className="pricing-discount" style={{ marginLeft: '6px' }}>{simDiscount}% OFF</span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="card-bottom-actions" style={{ marginTop: '12px' }}>

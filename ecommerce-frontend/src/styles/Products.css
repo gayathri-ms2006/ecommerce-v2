@@ -130,13 +130,25 @@
 /* Grid Layout matching strict user constraints */
 .catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 300px); /* Strict column size */
-  gap: 20px; /* Reduced gap to fit more products */
+  grid-template-columns: repeat(4, 1fr); /* 4 columns on desktop */
+  gap: 20px;
   justify-content: center;
 }
 
+@media (max-width: 1100px) {
+  .catalog-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 columns on tablet */
+  }
+}
+
+@media (max-width: 600px) {
+  .catalog-grid {
+    grid-template-columns: repeat(1, 1fr); /* 1 column on mobile */
+  }
+}
+
 .catalog-item-card {
-  width: 300px;
+  width: 100%;
   height: 520px; /* Compact, uniform height */
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
@@ -155,10 +167,10 @@
   border-color: rgba(37, 99, 235, 0.25);
 }
 
-/* 300x300 Image container exactly */
+/* Fluid responsive Image container */
 .card-image-box {
-  width: 300px;
-  height: 300px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   position: relative;
   background-color: var(--bg-secondary);

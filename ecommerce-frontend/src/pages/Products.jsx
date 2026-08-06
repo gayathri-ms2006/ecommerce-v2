@@ -399,8 +399,8 @@ const Products = () => {
               const isStockLoading = inventoryLoading && stock === undefined;
               const stockCount = stock || 0;
               const hasStock = stock !== undefined ? stock > 0 : true;
-              const oldPrice = Math.floor(product.price * 1.25);
-              const discount = 20;
+              const discount = product.discount !== undefined ? Number(product.discount) : 0;
+              const oldPrice = discount > 0 ? Math.round(product.price / (1 - discount / 100)) : 0;
               const rating = Number(product.rating || 4.4 + (idx % 3) * 0.1);
               const reviewCount = Number(product.reviewCount || 120 + idx * 7);
 
@@ -471,8 +471,12 @@ const Products = () => {
 
                       <div className="card-pricing-block">
                         <span className="pricing-current">{formatPrice(product.price)}</span>
-                        <span className="pricing-old">{formatPrice(oldPrice)}</span>
-                        <span className="pricing-discount">{discount}% OFF</span>
+                        {discount > 0 && (
+                          <>
+                            <span className="pricing-old">{formatPrice(oldPrice)}</span>
+                            <span className="pricing-discount">{discount}% OFF</span>
+                          </>
+                        )}
                       </div>
                     </div>
 
