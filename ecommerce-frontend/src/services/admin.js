@@ -118,18 +118,14 @@ export const createAdminProduct = async (productData) => {
     productId: productData.productId || `prod-${Date.now()}`,
   }, state.products.length);
 
+  await apiRequest('/products', { method: 'POST', body: JSON.stringify(nextProduct) }, true);
+  await apiRequest(`/inventory/${nextProduct.productId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ stockQuantity: nextProduct.stockQuantity })
+  }, true);
+
   state.products = [nextProduct, ...state.products];
   writeState(state);
-
-  try {
-    await apiRequest('/products', { method: 'POST', body: JSON.stringify(nextProduct) }, true);
-    await apiRequest(`/inventory/${nextProduct.productId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ stockQuantity: nextProduct.stockQuantity })
-    }, true);
-  } catch (error) {
-    console.warn('Product/Inventory API call failed, persisted locally:', error.message);
-  }
 
   return nextProduct;
 };
@@ -143,34 +139,27 @@ export const updateAdminProduct = async (productId, updates) => {
   }
 
   const updated = normalizeProduct({ ...state.products[index], ...updates, id: state.products[index].id, productId: state.products[index].productId }, index);
+
+  await apiRequest(`/products/${productId}`, { method: 'PUT', body: JSON.stringify(updated) }, true);
+  if (updates.stockQuantity !== undefined) {
+    await apiRequest(`/inventory/${updated.productId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ stockQuantity: Number(updates.stockQuantity) })
+    }, true);
+  }
+
   state.products[index] = updated;
   writeState(state);
-
-  try {
-    await apiRequest(`/products/${productId}`, { method: 'PUT', body: JSON.stringify(updated) }, true);
-    if (updates.stockQuantity !== undefined) {
-      await apiRequest(`/inventory/${updated.productId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ stockQuantity: Number(updates.stockQuantity) })
-      }, true);
-    }
-  } catch (error) {
-    console.warn('Product/Inventory update API call failed, persisted locally:', error.message);
-  }
 
   return updated;
 };
 
 export const deleteAdminProduct = async (productId) => {
+  await apiRequest(`/products/${productId}`, { method: 'DELETE' }, true);
+
   const state = readState();
   state.products = state.products.filter((item) => item.id !== productId && item.productId !== productId);
   writeState(state);
-
-  try {
-    await apiRequest(`/products/${productId}`, { method: 'DELETE' }, true);
-  } catch (error) {
-    console.warn('Product delete API call unavailable, persisted locally:', error.message);
-  }
 };
 
 export const fetchAdminInventory = async () => {
@@ -190,14 +179,11 @@ export const updateAdminInventory = async (productId, quantity) => {
   }
 
   const nextQuantity = Math.max(0, Number(quantity));
+
+  await apiRequest(`/inventory/${productId}`, { method: 'PATCH', body: JSON.stringify({ stockQuantity: nextQuantity }) }, true);
+
   state.products[index] = normalizeProduct({ ...state.products[index], stockQuantity: nextQuantity, status: nextQuantity > 0 ? 'Active' : 'Out of Stock' }, index);
   writeState(state);
-
-  try {
-    await apiRequest(`/inventory/${productId}`, { method: 'PATCH', body: JSON.stringify({ stockQuantity: nextQuantity }) }, true);
-  } catch (error) {
-    console.warn('Inventory update API call unavailable, persisted locally:', error.message);
-  }
 
   return state.products[index];
 };
@@ -229,14 +215,10 @@ export const updateAdminOrderStatus = async (orderId, status) => {
     throw new Error('Order not found');
   }
 
+  await apiRequest(`/orders/${orderId}`, { method: 'PATCH', body: JSON.stringify({ status }) }, true);
+
   state.orders[index] = normalizeOrder({ ...state.orders[index], status }, index);
   writeState(state);
-
-  try {
-    await apiRequest(`/orders/${orderId}`, { method: 'PATCH', body: JSON.stringify({ status }) }, true);
-  } catch (error) {
-    console.warn('Order status update API call unavailable, persisted locally:', error.message);
-  }
 
   return state.orders[index];
 };
