@@ -1,95 +1,109 @@
-# 🛍️ Serverless E-Commerce Platform (v2)
+# 🛍️ Serverless E-Commerce Platform
 
-A production-ready, serverless full-stack e-commerce application featuring a React frontend and modular AWS Lambda microservices backends.
+A production-grade, 100% serverless full-stack e-commerce solution designed for high scalability, cost efficiency, and zero-trust security. It features a modern React Single Page Application (SPA) client and a decoupled, single-responsibility microservices backend orchestrated by AWS Lambda, API Gateway, and Amazon DynamoDB, fully provisioned via Terraform IaC.
 
-🚀 **Live Deployment Link:** [https://d30dvwr72k2y05.cloudfront.net/](https://d30dvwr72k2y05.cloudfront.net/)
+🚀 **Live Deployment:** [https://d30dvwr72k2y05.cloudfront.net/](https://d30dvwr72k2y05.cloudfront.net/)
 
 ---
 
-## 🏗️ System Architecture
+## ⚡ Project Highlights
+
+* **100% Serverless Architecture**: Built entirely on pay-per-use AWS services (Lambda, API Gateway, DynamoDB, S3, CloudFront).
+* **Decoupled Microservices**: 6 independent microservices communicating via secure HTTP APIs and event-driven SNS messages.
+* **Infrastructure as Code (IaC)**: Entire AWS cloud environment managed and deployed via modular, DRY Terraform scripts.
+* **DevSecOps Integration**: Automated testing and deployment pipelines configured with GitHub Actions, SonarCloud analysis, and Snyk vulnerability scanning.
+* **Full Observability**: Integrated AWS Distro for OpenTelemetry (ADOT), AWS X-Ray distributed tracing, and CloudWatch metrics dashboard with SNS alerting.
+
+---
+
+## ✨ Features
+
+### 🛒 Customer Features
+* **Product Catalog**: Dynamic list with filtering by category and instant search.
+* **Wishlist**: Secure, personalized bookmarks for saving favorite products.
+* **Shopping Cart**: Real-time management, adding, updating, and removing cart items.
+* **Checkout Flow**: Complete express ordering sequence with simulated card payment.
+
+### 💼 Admin Features
+* **Product Catalog CRUD**: Interface to add, update, list, and delete catalog items.
+* **Inventory Control**: Real-time tracking and adjustment of product stock levels.
+* **Order Management**: Monitor customer checkout records and update shipping status.
+* **Business Analytics**: Key KPIs showing sales numbers, quantities sold, and order volumes.
+
+---
+
+## 🏗️ Architecture
+
+A clean, highly available architecture routing global requests through CloudFront to serverless compute and database layers:
 
 ```mermaid
 graph TD
-    %% Frontend Group
-    subgraph "Client & CDN"
-        User([Customer / Admin]) -->|HTTPS| CF[CloudFront CDN]
-        CF -->|Fetch Web Assets| S3_FE[S3 Frontend Bucket]
-    end
-
-    %% Routing
-    User -->|API Requests| APIGW[AWS API Gateway]
-
-    %% Microservices Group
-    subgraph "Microservices Backend"
-        APIGW -->|/products| Lambda_Prod[Product Lambda]
-        APIGW -->|/cart| Lambda_Cart[Cart Lambda]
-        APIGW -->|/inventory| Lambda_Inv[Inventory Lambda]
-        APIGW -->|/wishlist| Lambda_Wish[Wishlist Lambda]
-        APIGW -->|/payments| Lambda_Pay[Payment Lambda]
-        APIGW -->|/orders| Lambda_Order[Order Lambda]
-
-        %% Cross Service Calls
-        Lambda_Order -->|Invokes| Lambda_Inv
-        Lambda_Order -->|Invokes| Lambda_Pay
-        Lambda_Order -->|Publishes Events| SNS_Topic[SNS Order Events Topic]
-    end
-
-    %% Database Group
-    subgraph "Amazon DynamoDB (NoSQL)"
-        Lambda_Prod --> DB_Prod[(product-table)]
-        Lambda_Cart --> DB_Cart[(cart-table)]
-        Lambda_Inv --> DB_Inv[(inventory-table)]
-        Lambda_Wish --> DB_Wish[(wishlist-table)]
-        Lambda_Pay --> DB_Pay[(payment-table)]
-        Lambda_Order --> DB_Order[(order-table)]
-    end
-
-    %% Monitoring & Alerting
-    subgraph "Observability"
-        Lambda_Prod -.->|OTel Traces| CW_Trace[AWS X-Ray / CloudWatch]
-        Lambda_Cart -.->|OTel Traces| CW_Trace
-        Lambda_Inv -.->|OTel Traces| CW_Trace
-        Lambda_Wish -.->|OTel Traces| CW_Trace
-        Lambda_Pay -.->|OTel Traces| CW_Trace
-        Lambda_Order -.->|OTel Traces| CW_Trace
-        
-        CW_Trace -.-> CW_Dash[CloudWatch Dashboard]
-        CW_Dash -->|Alarms| SNS_Alerts[SNS Alerts Topic]
-    end
-
-    %% Styling
-    classDef aws fill:#FF9900,stroke:#fff,stroke-width:2px,color:#fff;
-    classDef db fill:#3F51B5,stroke:#fff,stroke-width:2px,color:#fff;
-    classDef monitor fill:#4CAF50,stroke:#fff,stroke-width:2px,color:#fff;
-    
-    class APIGW,Lambda_Prod,Lambda_Cart,Lambda_Inv,Lambda_Wish,Lambda_Pay,Lambda_Order,SNS_Topic,CF,S3_FE aws;
-    class DB_Prod,DB_Cart,DB_Inv,DB_Wish,DB_Pay,DB_Order db;
-    class CW_Trace,CW_Dash,SNS_Alerts monitor;
+    User([User]) -->|HTTPS| CF[CloudFront + S3]
+    User -->|API Requests| APIGW[API Gateway]
+    APIGW -->|Routes| Lambda[AWS Lambda Microservices]
+    Lambda -->|Reads/Writes| DynamoDB[(Amazon DynamoDB)]
+    Lambda -.->|Traces| XRay[AWS X-Ray / CloudWatch]
 ```
 
 ---
 
 ## 🛠️ Technology Stack
 
-* **Frontend**: React (Vite), React Router v6, Context API, Vanilla CSS, Jest.
-* **Backend Microservices**: Node.js, AWS Lambda (HTTP API Gateway proxy), Amazon DynamoDB, Joi schema validation.
-* **Infrastructure as Code (IaC)**: Terraform (creates DynamoDB tables, Lambda functions, API Gateway integration, CloudFront distribution, CloudWatch resources, SNS alerts).
-* **Observability (OTel Traces)**: AWS Distro for OpenTelemetry (ADOT) layer for Lambda to automatically trace requests across microservices.
-* **CI/CD**: GitHub Actions (17 workflows for automated tests and deployments), SonarCloud, and Snyk security scans.
+| Category | Technologies |
+|---|---|
+| **Frontend** | React, Vite, React Router v6, Context API, Vanilla CSS, Jest |
+| **Backend** | Node.js, AWS Lambda, API Gateway, Joi Payload Validation |
+| **Cloud Database** | Amazon DynamoDB (NoSQL) |
+| **Infrastructure** | Terraform IaC |
+| **DevSecOps** | GitHub Actions, SonarCloud Static Code Analysis, Snyk Vuln Scan |
+| **Monitoring** | CloudWatch Dashboard, CloudWatch Alarms, SNS Alerts, AWS X-Ray, ADOT (OpenTelemetry) |
 
 ---
 
-## 📊 Observability & Monitoring
+## 🧩 Microservices
 
-### 🔍 What are OTel Traces?
-**OTel (OpenTelemetry) Traces** represent the end-to-end journey of a request as it flows through the system (e.g., when a checkout request goes from API Gateway to the Order Lambda, which in turn calls the Inventory and Payment Lambdas). These traces are sent to AWS X-Ray via the ADOT Lambda Layer to visualize latency bottlenecks and debug errors across service boundaries.
+| Service | Purpose | Database Table |
+|---|---|---|
+| **Product Service** | Manages catalog items, metadata, and search queries | `product-{owner}` |
+| **Inventory Service**| Tracks and adjusts stock availability | `inventory-{owner}`|
+| **Cart Service** | Manages temporary shopping carts per user | `cart-{owner}` |
+| **Wishlist Service** | Tracks user product bookmarks | `wishlist` |
+| **Payment Service** | Handles payment simulation and transaction tracking | `payment-{owner}` |
+| **Order Service** | Orchestrates checkout, validates inventory, and processes orders | `order-{owner}` |
 
-### 📈 CloudWatch Dashboard & Alarms
-Terraform automatically provisions a central CloudWatch Dashboard (`cloudwatch-dashboard.tf`) to monitor:
-* API Gateway HTTP requests, latency, and 4xx/5xx errors.
-* Lambda invocations, execution duration, errors, and throttles.
-* DynamoDB read/write consumption and system errors.
-* CloudWatch Alarms that automatically trigger notifications via an SNS topic (`sns-alerts.tf`) if error rates or latency breach defined thresholds.
+---
+
+## 🚀 CI/CD Pipeline
+
+Continuous Integration and Deployment are managed via **17 separate GitHub Actions workflows**:
+
+### Frontend Pipeline
+```text
+GitHub Actions ──> Unit Tests (Jest) ──> Vite Build ──> Upload to S3 ──> CloudFront Invalidation
+```
+
+### Backend Pipeline
+```text
+GitHub Actions ──> Unit Tests (Jest) ──> SonarCloud Scan ──> Snyk Scan ──> AWS Lambda Update
+```
+
+---
+
+## 📊 Monitoring & Observability
+
+The application implements full-stack observability to capture metrics, trace requests, and alert on incidents:
+* **CloudWatch Dashboard**: Central dashboard tracking API Gateway error rates, Lambda execution latency, and DynamoDB capacities.
+* **CloudWatch Alarms & SNS**: Triggers immediate alerts via Amazon SNS if error rates or throttling breach thresholds.
+* **AWS X-Ray & OpenTelemetry**: Uses the AWS Distro for OpenTelemetry (ADOT) layer to trace client requests end-to-end across multiple Lambdas and databases, visualizing system dependencies and hot-spots.
+
+---
+
+## 🔒 Security & Code Quality
+
+* **Static Analysis**: SonarCloud tests every code integration for quality gates, code smells, duplication, and coverage.
+* **Vulnerability Gating**: Snyk scans dependencies automatically during pipeline builds to block insecure packages.
+* **Payload Verification**: Joi validators enforce strict request-response schemas on API Gateway endpoints to prevent NoSQL injection.
+* **Infrastructure Security**: Least-privilege IAM roles restrict access to DynamoDB tables and cross-service invocations.
 
 ---
 
@@ -97,24 +111,30 @@ Terraform automatically provisions a central CloudWatch Dashboard (`cloudwatch-d
 
 ```text
 ecommerce-v2/
-├── .github/workflows/         # CI/CD pipelines (unit testing & Lambda/S3 deploys)
-├── ecommerce-frontend/        # React client application code
-└── ecommerce-microservices/   # Backend services & Infrastructure definitions
-    ├── cart-service/          # Shopping cart logic
-    ├── inventory-service/     # Stock management logic
-    ├── order-service/         # Checkout & Order processing logic
-    ├── payment-service/       # Simulated checkout payment gateway
-    ├── product-service/       # Catalog & Item management logic
-    ├── wishlist-service/      # Wishlist operations logic
-    └── terraform/             # AWS resources IaC configurations
+├── .github/workflows/          # Automated CI/CD workflows
+├── ecommerce-frontend/         # React + Vite client-side SPA
+│   ├── src/
+│   │   ├── components/         # Common layouts, route protection
+│   │   ├── context/            # Cart & Wishlist state contexts
+│   │   ├── pages/              # Customer & Admin pages
+│   │   └── services/           # Backend API connection logic
+│   └── package.json
+└── ecommerce-microservices/    # Node.js services & IaC resources
+    ├── cart-service/           # Shopping cart service
+    ├── inventory-service/      # Inventory service
+    ├── order-service/          # Order placement coordinator
+    ├── payment-service/        # Simulated payment processor
+    ├── product-service/        # Product catalog service
+    ├── wishlist-service/       # Bookmark wishlist service
+    └── terraform/              # Terraform scripts (DynamoDB, Lambda, dashboards)
 ```
 
 ---
 
-## 🚀 Deployment Guide
+## ☁️ Deployment
 
-### 1. Provision Infrastructure & Dashboards (Terraform)
-Since `terraform.tfvars` is already configured in the repository, you do not need to copy or create it. Deploy all AWS resources (DynamoDB tables, Lambdas, API Gateway, CDN, CloudWatch Dashboard, and Alarms) by running:
+### 1. Provision Cloud Infrastructure (Terraform)
+Since `terraform.tfvars` is pre-configured in the repository, you can deploy the database, computing, routing, and monitoring assets directly:
 
 ```bash
 cd ecommerce-microservices/terraform
@@ -122,7 +142,5 @@ terraform init
 terraform apply
 ```
 
-### 2. CI/CD Pipeline (GitHub Actions)
-Once the base infrastructure is deployed via Terraform, the codebase is continuously deployed via GitHub Actions:
-* **Frontend**: Code pushes to `ecommerce-frontend/` trigger `deploy-frontend.yml` which builds the React app, syncs it to S3, and invalidates the CloudFront cache.
-* **Microservices**: Code pushes to any service directory (e.g. `product-service/`) run unit tests and automatically update the corresponding AWS Lambda function code using the AWS CLI.
+### 2. Service Code Updates (CI/CD)
+Subsequent code merges to the `main` branch trigger GitHub Actions to run verification tests and automatically update the corresponding S3 client bucket or AWS Lambda function packages.
