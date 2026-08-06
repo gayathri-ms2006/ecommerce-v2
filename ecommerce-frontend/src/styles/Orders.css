@@ -464,3 +464,31 @@
     opacity: 1;
   }
 }
+
+/* Cancelled Timeline & Active Step Styles */
+.cancelled-timeline {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  padding: 8px 0;
+}
+
+.cancelled-step .step-icon-circle {
+  border-color: var(--danger) !important;
+  background-color: var(--danger-light) !important;
+  color: var(--danger) !important;
+}
+
+.cancelled-step .step-label-text {
+  color: var(--danger) !important;
+  font-weight: 700;
+}
+
+.timeline-horizontal-step.active .step-icon-circle {
+  border-color: var(--primary);
+  background-color: var(--primary-light);
+  color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+

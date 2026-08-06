@@ -282,9 +282,9 @@ const ProductDetails = () => {
           {/* Left Column: Image Gallery */}
           <section className="gallery-section">
             <div className="main-image-container">
-              {productImages.length > 0 && productImages[activeImageIndex] ? (
+              {product && product.imageUrl ? (
                 <img
-                  src={productImages[activeImageIndex].url}
+                  src={product.imageUrl}
                   alt={`${product.name} - Display`}
                   className="main-gallery-image"
                 />
@@ -294,20 +294,6 @@ const ProductDetails = () => {
                 </div>
               )}
             </div>
-
-            {productImages.length > 1 && (
-              <div className="thumbnail-strip">
-                {productImages.map((img, index) => (
-                  <button
-                    key={index}
-                    className={`thumbnail-button ${index === activeImageIndex ? 'active' : ''}`}
-                    onClick={() => setActiveImageIndex(index)}
-                  >
-                    <img src={img.url} alt={`Angle ${index + 1}`} />
-                  </button>
-                ))}
-              </div>
-            )}
           </section>
 
           {/* Right Column: Meta Information */}

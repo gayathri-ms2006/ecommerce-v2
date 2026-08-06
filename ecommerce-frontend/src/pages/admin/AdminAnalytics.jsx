@@ -121,7 +121,6 @@ const AdminAnalytics = () => {
     }
 
     // 4. Customer Growth (Cumulative orders over timeline)
-    // We sort orders ascending to calculate cumulative sum
     const chronologicalOrders = [...filteredOrders].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     let runningCustomerCount = 0;
     const addedCustomers = new Set();
@@ -140,7 +139,6 @@ const AdminAnalytics = () => {
         runningCustomerCount += 1;
       }
 
-      // Check if entry already exists for this label to merge or push new
       const existing = customerGrowthData.find(d => d.label === label);
       if (existing) {
         existing.Customers = runningCustomerCount;
@@ -184,7 +182,7 @@ const AdminAnalytics = () => {
     }).format(val || 0);
 
   return (
-    <AdminLayout title="Advanced Analytics" subtitle="Deep intelligence models, customer metrics, and revenue attribution">
+    <AdminLayout title="Analytics" subtitle="Deep intelligence models, customer metrics, and revenue attribution">
       <div className="dashboard-controls-bar">
         <div className="filter-button-group">
           {['today', '7days', '30days', '90days', 'year'].map((tf) => (
@@ -210,44 +208,88 @@ const AdminAnalytics = () => {
           {/* Stat Cards Row */}
           <div className="admin-kpi-grid">
             <div className="admin-stat-card accent-green">
-              <div className="stat-card-label">Revenue Overview</div>
+              <div className="stat-card-header">
+                <span className="stat-card-label">Revenue Overview</span>
+                <span className="stat-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                  </svg>
+                </span>
+              </div>
               <div className="stat-card-value">{formatCurrency(metrics.totalRevenue)}</div>
               <div className="stat-card-subtext">Total active transactions</div>
             </div>
+
             <div className="admin-stat-card accent-blue">
-              <div className="stat-card-label">Total Transactions</div>
+              <div className="stat-card-header">
+                <span className="stat-card-label">Total Transactions</span>
+                <span className="stat-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                  </svg>
+                </span>
+              </div>
               <div className="stat-card-value">{metrics.totalOrdersCount}</div>
               <div className="stat-card-subtext">Total orders registered</div>
             </div>
+
             <div className="admin-stat-card accent-purple">
-              <div className="stat-card-label">AOV Metrics</div>
+              <div className="stat-card-header">
+                <span className="stat-card-label">AOV Metrics</span>
+                <span className="stat-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10" />
+                    <line x1="12" y1="20" x2="12" y2="4" />
+                    <line x1="6" y1="20" x2="6" y2="14" />
+                  </svg>
+                </span>
+              </div>
               <div className="stat-card-value">{formatCurrency(metrics.aov)}</div>
               <div className="stat-card-subtext">Average spend per basket</div>
             </div>
-            <div className="admin-stat-card accent-danger">
-              <div className="stat-card-label">Cancellation Rate</div>
+
+            <div className="admin-stat-card accent-warning">
+              <div className="stat-card-header">
+                <span className="stat-card-label">Cancellation Rate</span>
+                <span className="stat-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                  </svg>
+                </span>
+              </div>
               <div className="stat-card-value">{metrics.cancellationRate.toFixed(1)}%</div>
               <div className="stat-card-subtext">Cancelled order percentage</div>
             </div>
           </div>
 
           <div className="admin-chart-grid" style={{ marginTop: '24px' }}>
-            
             {/* Revenue Trend Line */}
             <div className="admin-chart-card">
               <div className="chart-card-header">
                 <h3>Revenue Growth Curve</h3>
-                <span>Timeline sales analysis</span>
+                <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>Timeline sales analysis</span>
               </div>
-              <div style={{ width: '100%', height: 260 }}>
+              <div className="admin-chart-container">
                 <ResponsiveContainer>
-                  <LineChart data={metrics.trends}>
+                  <AreaChart data={metrics.trends}>
+                    <defs>
+                      <linearGradient id="analyticsRevGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                     <XAxis dataKey="label" stroke="#94A3B8" fontSize={11} tickLine={false} />
                     <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val}`} />
                     <Tooltip formatter={(value) => [formatCurrency(value), 'Revenue']} />
-                    <Line type="monotone" dataKey="Revenue" stroke="#10B981" strokeWidth={3} dot={{ r: 2 }} activeDot={{ r: 6 }} />
-                  </LineChart>
+                    <Area type="monotone" dataKey="Revenue" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#analyticsRevGrad)" />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
@@ -256,14 +298,14 @@ const AdminAnalytics = () => {
             <div className="admin-chart-card">
               <div className="chart-card-header">
                 <h3>Order Volumetrics</h3>
-                <span>Transactions curve</span>
+                <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>Transactions curve</span>
               </div>
-              <div style={{ width: '100%', height: 260 }}>
+              <div className="admin-chart-container">
                 <ResponsiveContainer>
                   <AreaChart data={metrics.trends}>
                     <defs>
                       <linearGradient id="orderGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.4}/>
+                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.2}/>
                         <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
@@ -276,21 +318,19 @@ const AdminAnalytics = () => {
                 </ResponsiveContainer>
               </div>
             </div>
-
           </div>
 
           <div className="admin-chart-grid" style={{ marginTop: '24px' }}>
-            
             {/* Customer Growth Line */}
             <div className="admin-chart-card">
               <div className="chart-card-header">
                 <h3>Active Customer Growth</h3>
-                <span>Cumulative unique purchasers</span>
+                <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>Cumulative unique purchasers</span>
               </div>
               {metrics.customerGrowthData.length === 0 ? (
                 <div className="admin-empty-chart">No customer growth logs in timeframe</div>
               ) : (
-                <div style={{ width: '100%', height: 260 }}>
+                <div className="admin-chart-container">
                   <ResponsiveContainer>
                     <LineChart data={metrics.customerGrowthData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
@@ -308,12 +348,12 @@ const AdminAnalytics = () => {
             <div className="admin-chart-card">
               <div className="chart-card-header">
                 <h3>Revenue Attribution by Product</h3>
-                <span>Total currency generated per product (Top 10)</span>
+                <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>Total currency generated per product (Top 10)</span>
               </div>
               {metrics.productRevenueData.length === 0 ? (
                 <div className="admin-empty-chart">No product revenue attribution in timeframe</div>
               ) : (
-                <div style={{ width: '100%', height: 260 }}>
+                <div className="admin-chart-container">
                   <ResponsiveContainer>
                     <BarChart data={metrics.productRevenueData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
@@ -326,7 +366,6 @@ const AdminAnalytics = () => {
                 </div>
               )}
             </div>
-
           </div>
         </>
       ) : null}

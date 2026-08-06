@@ -9,11 +9,22 @@ import '../styles/Orders.css';
 const OrderTimelineCompact = ({ status }) => {
   const currentStatus = (status || 'PENDING').toUpperCase();
 
+  if (currentStatus === 'CANCELLED') {
+    return (
+      <div className="orders-horizontal-timeline cancelled-timeline">
+        <div className="timeline-horizontal-step completed-step cancelled-step">
+          <div className="step-icon-circle">✕</div>
+          <span className="step-label-text">Cancelled</span>
+        </div>
+      </div>
+    );
+  }
+
   const stages = [
-    { label: 'Order Placed', emoji: '✅' },
+    { label: 'Placed', emoji: '✓' },
     { label: 'Processing', emoji: '⚙️' },
     { label: 'Shipped', emoji: '🚚' },
-    { label: 'Out For Delivery', emoji: '📦' },
+    { label: 'Out for Delivery', emoji: '📦' },
     { label: 'Delivered', emoji: '🎉' }
   ];
 
@@ -27,13 +38,12 @@ const OrderTimelineCompact = ({ status }) => {
     <div className="orders-horizontal-timeline">
       {stages.map((stage, idx) => {
         const isCompleted = idx <= activeIndex;
-        // Render checkmarks or specific emojis for completed stages
-        const displayEmoji = isCompleted ? (idx === 1 ? '✅' : stage.emoji) : '○';
+        const isActive = idx === activeIndex;
         
         return (
-          <div key={idx} className={`timeline-horizontal-step ${isCompleted ? 'completed' : ''}`}>
+          <div key={idx} className={`timeline-horizontal-step ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}>
             <div className="step-icon-circle">
-              {displayEmoji}
+              {isCompleted ? stage.emoji : ''}
             </div>
             <span className="step-label-text">{stage.label}</span>
             {idx < stages.length - 1 && (

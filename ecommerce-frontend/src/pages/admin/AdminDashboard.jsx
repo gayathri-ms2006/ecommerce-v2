@@ -28,25 +28,33 @@ const STATUS_COLORS = {
   Shipped: '#8B5CF6'
 };
 
-const StatCard = ({ label, value, indicator, subtext, trendUp }) => (
+const getInitials = (name) => {
+  if (!name) return 'U';
+  return name.split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
+};
+
+const StatCard = ({ label, value, icon, indicator, subtext, trendUp }) => (
   <div className="admin-stat-card">
-    <div className="stat-card-top">
+    <div className="stat-card-header">
       <span className="stat-card-label">{label}</span>
+      <span className="stat-card-icon">{icon}</span>
+    </div>
+    <div className="stat-card-value">{value}</div>
+    <div className="stat-card-footer">
       {indicator && (
         <span className={`trend-badge ${trendUp ? 'trend-up' : 'trend-down'}`}>
           {trendUp ? '▲' : '▼'} {indicator}
         </span>
       )}
+      {subtext && <span className="stat-card-subtext">{subtext}</span>}
     </div>
-    <div className="stat-card-value">{value}</div>
-    {subtext && <div className="stat-card-subtext">{subtext}</div>}
   </div>
 );
 
 const DashboardSkeleton = () => (
   <div className="admin-skeleton-wrapper">
     <div className="admin-kpi-grid">
-      {Array.from({ length: 4 }).map((_, idx) => (
+      {Array.from({ length: 6 }).map((_, idx) => (
         <div key={idx} className="skeleton-kpi-card loading-shimmer" style={{ height: '120px', borderRadius: '12px' }} />
       ))}
     </div>
@@ -113,10 +121,12 @@ const AdminDashboard = () => {
 
     // 2. Calculations
     const revenue = activeOrders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
-    const lowStock = products.filter((p) => p.stockQuantity > 0 && p.stockQuantity <= 10).length;
+    const lowStockList = products.filter((p) => p.stockQuantity > 0 && p.stockQuantity <= 10);
+    const lowStock = lowStockList.length;
     const outOfStock = products.filter((p) => p.stockQuantity === 0).length;
     const customersCount = new Set(filteredOrders.map(o => o.userId).filter(Boolean)).size;
     const aov = activeOrders.length > 0 ? revenue / activeOrders.length : 0;
+    const inventoryValue = products.reduce((sum, p) => sum + Number(p.price || 0) * Number(p.stockQuantity || 0), 0);
 
     // 3. Category Distribution
     const categoryCounts = {};
@@ -180,6 +190,11 @@ const AdminDashboard = () => {
       }
     }
 
+    // Recent 5 orders
+    const recentOrdersList = [...orders]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5);
+
     // 6. Top Selling Products
     const productSalesCount = {};
     filteredOrders.forEach((o) => {
@@ -215,8 +230,11 @@ const AdminDashboard = () => {
       activeOrdersCount: activeOrders.length,
       lowStock,
       outOfStock,
+      lowStockList,
       customersCount,
       aov,
+      inventoryValue,
+      recentOrdersList,
       chartData,
       categoryData,
       statusData,
@@ -234,7 +252,7 @@ const AdminDashboard = () => {
     }).format(val || 0);
 
   return (
-    <AdminLayout title="Operational Dashboard" subtitle="Shopify-grade real-time ecommerce monitoring">
+    <AdminLayout title="Dashboard" subtitle="Shopify-grade real-time commerce monitoring">
       <div className="dashboard-controls-bar">
         <div className="filter-button-group">
           {['today', '7days', '30days', '90days', 'year'].map((tf) => (
@@ -262,52 +280,105 @@ const AdminDashboard = () => {
             <StatCard
               label="Total Revenue"
               value={formatCurrency(metrics.revenue)}
+              icon={
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              }
               indicator={filter === '7days' ? '12.4%' : null}
               trendUp={true}
-              subtext="Excluding cancellations"
+              subtext="Net sales volume"
             />
             <StatCard
-              label="Orders"
+              label="Total Orders"
               value={metrics.totalOrders}
+              icon={
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="21" r="1" />
+                  <circle cx="20" cy="21" r="1" />
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                </svg>
+              }
               indicator={filter === '7days' ? '8.1%' : null}
               trendUp={true}
-              subtext={`AOV: ${formatCurrency(metrics.aov)}`}
+              subtext={`Avg Order: ${formatCurrency(metrics.aov)}`}
             />
             <StatCard
-              label="Active Customers"
+              label="Total Products"
+              value={metrics.productsCount}
+              icon={
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                  <line x1="12" y1="22.08" x2="12" y2="12" />
+                </svg>
+              }
+              subtext="Items in catalog"
+            />
+            <StatCard
+              label="Customers"
               value={metrics.customersCount}
-              subtext="Unique buyer accounts"
+              icon={
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              }
+              subtext="Active buyers"
             />
             <StatCard
-              label="Low / Out of Stock"
-              value={`${metrics.lowStock} / ${metrics.outOfStock}`}
-              subtext={`Total catalog: ${metrics.productsCount} items`}
+              label="Inventory Value"
+              value={formatCurrency(metrics.inventoryValue)}
+              icon={
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <ellipse cx="12" cy="5" rx="9" ry="3" />
+                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                  <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
+                </svg>
+              }
+              subtext="Catalog assets value"
+            />
+            <StatCard
+              label="Low Stock Items"
+              value={metrics.lowStock}
+              icon={
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              }
+              indicator={metrics.lowStock > 0 ? `${metrics.lowStock} items` : null}
+              trendUp={false}
+              subtext={`Out of stock: ${metrics.outOfStock}`}
             />
           </div>
 
           {/* Large Charts Grid */}
           <div className="admin-chart-grid" style={{ marginTop: '24px' }}>
-            
             {/* Sales Trends Chart */}
             <div className="admin-chart-card">
               <div className="chart-card-header">
                 <h3>Sales & Revenue Performance</h3>
-                <span>Gradients visual (Live metrics)</span>
+                <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>Gradients visual (Live metrics)</span>
               </div>
-              <div style={{ width: '100%', height: 260 }}>
+              <div className="admin-chart-container">
                 <ResponsiveContainer>
                   <AreaChart data={metrics.chartData}>
                     <defs>
                       <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                     <XAxis dataKey="label" stroke="#94A3B8" fontSize={11} tickLine={false} />
                     <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val}`} />
                     <Tooltip formatter={(value) => [formatCurrency(value), 'Revenue']} />
-                    <Area type="monotone" dataKey="Revenue" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#salesGrad)" />
+                    <Area type="monotone" dataKey="Revenue" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#salesGrad)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -317,9 +388,9 @@ const AdminDashboard = () => {
             <div className="admin-chart-card">
               <div className="chart-card-header">
                 <h3>Orders Volumetrics</h3>
-                <span>Activity counts</span>
+                <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>Activity counts</span>
               </div>
-              <div style={{ width: '100%', height: 260 }}>
+              <div className="admin-chart-container">
                 <ResponsiveContainer>
                   <BarChart data={metrics.chartData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
@@ -331,139 +402,83 @@ const AdminDashboard = () => {
                 </ResponsiveContainer>
               </div>
             </div>
-
           </div>
 
-          <div className="admin-chart-grid" style={{ marginTop: '24px' }}>
-            
-            {/* Donut Chart: Order Status */}
-            <div className="admin-chart-card">
-              <div className="chart-card-header">
-                <h3>Order Status Flow</h3>
-                <span>Fulfillment tracking</span>
-              </div>
-              {metrics.statusData.length === 0 ? (
-                <div className="admin-empty-chart">No order logs in timeframe</div>
-              ) : (
-                <div style={{ width: '100%', height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <ResponsiveContainer width="60%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={metrics.statusData}
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={4}
-                        dataKey="value"
-                      >
-                        {metrics.statusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name] || CHART_COLORS[index % CHART_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="donut-legend-block">
-                    {metrics.statusData.map((entry, index) => (
-                      <div key={entry.name} className="legend-row">
-                        <span className="legend-dot" style={{ backgroundColor: STATUS_COLORS[entry.name] || CHART_COLORS[index % CHART_COLORS.length] }} />
-                        <span className="legend-text">{entry.name} ({entry.value})</span>
-                      </div>
-                    ))}
-                  </div>
+          <div className="admin-dashboard-layout-row">
+            {/* Recent Orders List */}
+            <div className="admin-panel-card">
+              <div className="admin-panel-header">
+                <div>
+                  <h3>Recent Orders</h3>
+                  <p>The latest purchase transactions in your store.</p>
                 </div>
-              )}
-            </div>
-
-            {/* Horizontal Bar Chart: Top Selling Products */}
-            <div className="admin-chart-card">
-              <div className="chart-card-header">
-                <h3>Top Selling Items</h3>
-                <span>Quantities ordered</span>
               </div>
-              {metrics.topSelling.length === 0 ? (
-                <div className="admin-empty-chart">No product items sold in timeframe</div>
+              {metrics.recentOrdersList.length === 0 ? (
+                <div className="admin-empty-chart">No orders logged yet</div>
               ) : (
-                <div style={{ width: '100%', height: 240 }}>
-                  <ResponsiveContainer>
-                    <BarChart
-                      layout="vertical"
-                      data={metrics.topSelling}
-                      margin={{ left: 20, right: 20, top: 10, bottom: 10 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
-                      <XAxis type="number" stroke="#94A3B8" fontSize={11} tickLine={false} />
-                      <YAxis dataKey="name" type="category" stroke="#94A3B8" fontSize={11} width={80} tickLine={false} />
-                      <Tooltip formatter={(value) => [`${value} units`]} />
-                      <Bar dataKey="Sales" fill="#8B5CF6" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-
-          </div>
-
-          <div className="admin-chart-grid" style={{ marginTop: '24px' }}>
-            
-            {/* Pie Chart: Categories split */}
-            <div className="admin-chart-card">
-              <div className="chart-card-header">
-                <h3>Catalog Categories</h3>
-                <span>Mix ratios</span>
-              </div>
-              <div style={{ width: '100%', height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ResponsiveContainer width="60%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={metrics.categoryData}
-                      outerRadius={80}
-                      dataKey="value"
-                    >
-                      {metrics.categoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                <div className="admin-table-wrapper">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {metrics.recentOrdersList.map((order) => (
+                        <tr key={order.id}>
+                          <td style={{ fontWeight: 600 }}>{order.orderId}</td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div className="table-user-avatar">{getInitials(order.customerName)}</div>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <strong style={{ fontSize: '12px' }}>{order.customerName}</strong>
+                                <span style={{ fontSize: '11px', color: 'var(--admin-text-muted)' }}>{order.email}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={{ fontWeight: 700 }}>{formatCurrency(order.totalAmount)}</td>
+                          <td>
+                            <span className={`status-pill ${order.status === 'Delivered' ? 'success' : order.status === 'Cancelled' ? 'danger' : 'warning'}`}>
+                              {order.status}
+                            </span>
+                          </td>
+                        </tr>
                       ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="donut-legend-block">
-                  {metrics.categoryData.map((entry, index) => (
-                    <div key={entry.name} className="legend-row">
-                      <span className="legend-dot" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
-                      <span className="legend-text">{entry.name} ({entry.value})</span>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Low Stock Alerts Panel */}
+            <div className="admin-panel-card">
+              <div className="admin-panel-header">
+                <div>
+                  <h3>Low Stock Alerts</h3>
+                  <p>Product quantities requiring immediate attention.</p>
+                </div>
+              </div>
+              {metrics.lowStockList.length === 0 ? (
+                <div className="admin-empty-chart" style={{ height: '180px', minHeight: '180px' }}>
+                  All items are well stocked! ✅
+                </div>
+              ) : (
+                <div className="low-stock-list">
+                  {metrics.lowStockList.map((prod) => (
+                    <div key={prod.id} className="low-stock-item">
+                      <div className="low-stock-info">
+                        <span className="low-stock-name">{prod.productName || prod.name}</span>
+                        <span className="low-stock-details">Category: {prod.category || 'General'}</span>
+                      </div>
+                      <span className="low-stock-badge">{prod.stockQuantity} Left</span>
                     </div>
                   ))}
                 </div>
-              </div>
+              )}
             </div>
-
-            {/* Stacked Bar Chart: Inventory Health */}
-            <div className="admin-chart-card">
-              <div className="chart-card-header">
-                <h3>Inventory Stock Health</h3>
-                <span>Availability metrics</span>
-              </div>
-              <div style={{ width: '100%', height: 240, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '20px' }}>
-                {metrics.inventorySplit.map((item, index) => {
-                  const total = metrics.productsCount || 1;
-                  const pct = Math.round((item.value / total) * 100);
-                  const color = index === 0 ? '#10B981' : index === 1 ? '#F59E0B' : '#EF4444';
-                  
-                  return (
-                    <div key={item.name} className="health-progress-row">
-                      <div className="progress-info-labels">
-                        <strong>{item.name}</strong>
-                        <span>{item.value} products ({pct}%)</span>
-                      </div>
-                      <div className="progress-track-bg">
-                        <div className="progress-fill-bar" style={{ width: `${pct}%`, backgroundColor: color }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
           </div>
         </>
       ) : null}

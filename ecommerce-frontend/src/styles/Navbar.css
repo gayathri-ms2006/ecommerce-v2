@@ -58,20 +58,25 @@
 
 .navbar-search-input-actual {
   width: 100%;
-  padding: 10px 16px 10px 42px;
+  padding: 10px 16px 10px 44px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-color);
   background-color: var(--card-bg);
   font-size: 14px;
   color: var(--text-main);
   outline: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar-search-input-actual:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .navbar-search-input-actual:focus {
   background-color: var(--card-bg);
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
 .search-lens-icon {
@@ -375,14 +380,16 @@
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  min-width: 220px;
-  background-color: var(--card-bg);
+  min-width: 240px;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-premium);
   overflow: hidden;
   z-index: 1010;
-  animation: dropdownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: dropdownFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .categories-dropdown-item {

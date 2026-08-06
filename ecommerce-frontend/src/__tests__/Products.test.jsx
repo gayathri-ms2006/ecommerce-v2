@@ -207,7 +207,7 @@ describe('Products Page component tests', () => {
     await waitFor(() => {
       expect(screen.getByText('MacBook Air M2')).toBeInTheDocument();
       expect(screen.queryByText('iPhone 15 Pro')).not.toBeInTheDocument();
-      expect(screen.getByText('Showing 1 products')).toBeInTheDocument();
+      expect(screen.getByText(/Showing 1.*product/i)).toBeInTheDocument();
     });
   });
 });

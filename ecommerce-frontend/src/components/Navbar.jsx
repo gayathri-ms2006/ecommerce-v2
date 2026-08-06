@@ -175,7 +175,7 @@ const Navbar = ({ searchQuery = '', onSearchChange, selectedCategory = '', onCat
               onClick={() => setCategoriesOpen((prev) => !prev)}
               aria-label="Open categories menu"
             >
-              <span>Categories</span>
+              <span>{selectedCategory ? `Categories: ${selectedCategory}` : 'Categories'}</span>
               <span className="categories-chevron">▾</span>
             </button>
 

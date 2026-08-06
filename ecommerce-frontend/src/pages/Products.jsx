@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchProductsList } from '../services/products';
 import { fetchProductInventory } from '../services/inventory';
@@ -64,6 +64,18 @@ const Products = () => {
     const urlCategory = searchParams.get('category') || '';
     setSelectedCategory(urlCategory);
   }, [searchParams]);
+
+  const categories = useMemo(() => {
+    return Array.from(
+      new Set(
+        products
+          .map((p) => p.category)
+          .filter(Boolean)
+          .map((c) => c.trim())
+      )
+    ).sort();
+  }, [products]);
+
 
   const fetchProducts = async () => {
     try {
@@ -260,6 +272,56 @@ const Products = () => {
         </div>
       )}
 
+      {/* Category Chips Bar */}
+      <div className="category-chips-bar">
+        <button
+          className={`category-chip ${!selectedCategory ? 'active' : ''}`}
+          onClick={() => {
+            setSelectedCategory('');
+            const newParams = {};
+            if (searchQuery) newParams.search = searchQuery;
+            setSearchParams(newParams);
+          }}
+        >
+          All
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            className={`category-chip ${selectedCategory === cat ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedCategory(cat);
+              const newParams = {};
+              if (searchQuery) newParams.search = searchQuery;
+              newParams.category = cat;
+              setSearchParams(newParams);
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {selectedCategory && (
+        <div className="active-filter-indicator">
+          <span className="active-filter-chip">
+            {selectedCategory}
+            <span
+              className="clear-filter-btn"
+              onClick={() => {
+                setSelectedCategory('');
+                const newParams = {};
+                if (searchQuery) newParams.search = searchQuery;
+                setSearchParams(newParams);
+              }}
+              title="Clear category filter"
+            >
+              ×
+            </span>
+          </span>
+        </div>
+      )}
+
       <header className="catalog-compact-header">
         <span className="header-badge-tag">Featured Products</span>
         <h1 className="header-title-text">Curated Marketplace</h1>
@@ -285,7 +347,7 @@ const Products = () => {
         </div>
 
         <div className="toolbar-info">
-          <span>Showing {displayProducts.length} products</span>
+          <span>Showing {displayProducts.length} {selectedCategory ? `${selectedCategory} ` : ''}{displayProducts.length === 1 ? 'Product' : 'Products'}</span>
         </div>
 
         <div className="toolbar-sorting">

@@ -3,6 +3,11 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import { fetchAdminUsers } from '../../services/admin';
 import '../../styles/Admin.css';
 
+const getInitials = (name) => {
+  if (!name) return 'U';
+  return name.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase();
+};
+
 const AdminCustomers = () => {
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState('');
@@ -121,23 +126,22 @@ const AdminCustomers = () => {
 
   return (
     <AdminLayout title="Customers" subtitle="Understand customer lifetime value, metrics, and purchasing patterns">
-      
       {/* Customer Insights KPIs */}
       <div className="admin-kpi-grid">
         <div className="admin-stat-card accent-green">
           <div className="stat-card-label">Highest Spender</div>
-          <div className="stat-card-value" style={{ fontSize: '20px', margin: '4px 0' }}>
+          <div className="stat-card-value" style={{ fontSize: '18px', margin: '4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {insights.topSpender.name}
           </div>
-          <div className="stat-card-subtext">Total Spend: {formatCurrency(insights.topSpender.spend)}</div>
+          <div className="stat-card-subtext">Lifetime spend: {formatCurrency(insights.topSpender.spend)}</div>
         </div>
 
         <div className="admin-stat-card accent-blue">
           <div className="stat-card-label">Most Active Buyer</div>
-          <div className="stat-card-value" style={{ fontSize: '20px', margin: '4px 0' }}>
+          <div className="stat-card-value" style={{ fontSize: '18px', margin: '4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {insights.mostActive.name}
           </div>
-          <div className="stat-card-subtext">{insights.mostActive.count} orders placed</div>
+          <div className="stat-card-subtext">{insights.mostActive.count} orders completed</div>
         </div>
 
         <div className="admin-stat-card accent-purple">
@@ -161,12 +165,12 @@ const AdminCustomers = () => {
         <div className="admin-panel-header">
           <div>
             <h3>Customer Cohort Directory</h3>
-            <p>Review customer spend parameters, emails, and purchasing patterns.</p>
+            <p>Review customer spend metrics, email registration records, and activity parameters.</p>
           </div>
           <div className="admin-toolbar">
             <input
               className="admin-input"
-              placeholder="Search by name, email or ID"
+              placeholder="Search by name, email or ID..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -192,14 +196,13 @@ const AdminCustomers = () => {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Username/Name</th>
-                  <th>Email</th>
+                  <th>Customer Profile</th>
+                  <th>Email Address</th>
                   <th style={{ textAlign: 'center' }}>Total Orders</th>
                   <th style={{ textAlign: 'right' }}>Total Spend</th>
                   <th style={{ textAlign: 'right' }}>Avg Order Value</th>
-                  <th>First Purchase</th>
                   <th>Last Purchase</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th style={{ textAlign: 'right' }}>Identity</th>
                 </tr>
               </thead>
               <tbody>
@@ -208,23 +211,27 @@ const AdminCustomers = () => {
                   
                   return (
                     <React.Fragment key={user.id}>
-                      <tr className={isExpanded ? 'row-active' : ''}>
+                      <tr className={isExpanded ? 'row-active' : ''} style={{ backgroundColor: isExpanded ? '#f8fafc' : 'inherit' }}>
                         <td>
-                          <strong>{user.name}</strong>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div className="table-user-avatar" style={{ backgroundColor: '#eff6ff', color: '#1d4edf' }}>
+                              {getInitials(user.name)}
+                            </div>
+                            <strong style={{ fontSize: '13px' }}>{user.name}</strong>
+                          </div>
                         </td>
                         <td>{user.email || 'N/A'}</td>
                         <td style={{ textAlign: 'center' }}>
-                          <span className="topbar-badge" style={{ padding: '2px 8px', fontSize: '12px' }}>
+                          <span className="status-pill info" style={{ backgroundColor: '#f1f5f9', color: '#475569', fontSize: '11px', padding: '2px 8px' }}>
                             {user.totalOrders}
                           </span>
                         </td>
-                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--success)' }}>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: '#16a34a' }}>
                           {formatCurrency(user.totalSpend)}
                         </td>
                         <td style={{ textAlign: 'right', fontWeight: 600 }}>
                           {formatCurrency(user.averageOrderValue)}
                         </td>
-                        <td>{formatDate(user.registeredAt)}</td>
                         <td>{formatDate(user.lastPurchaseAt)}</td>
                         <td style={{ textAlign: 'right' }}>
                           <button
@@ -238,25 +245,25 @@ const AdminCustomers = () => {
                       </tr>
                       {isExpanded && (
                         <tr className="user-detail-row">
-                          <td colSpan={8} style={{ backgroundColor: 'var(--bg-primary)', padding: '16px 24px' }}>
+                          <td colSpan={7} style={{ backgroundColor: '#f8fafc', padding: '16px 24px' }}>
                             <div className="user-detail-drawer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: 'var(--secondary)' }}>
+                              <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: 'var(--admin-text-main)' }}>
                                 Customer Identity Specifications
                               </h4>
                               <div style={{ display: 'flex', gap: '40px', marginTop: '4px' }}>
                                 <div>
-                                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', fontWeight: 700, textTransform: 'uppercase' }}>
+                                  <span style={{ fontSize: '11px', color: 'var(--admin-text-muted)', display: 'block', fontWeight: 700, textTransform: 'uppercase' }}>
                                     Cognito User ID (sub UUID)
                                   </span>
-                                  <code style={{ fontSize: '12px', color: 'var(--text-main)' }}>
+                                  <code style={{ fontSize: '12px', color: 'var(--admin-text-main)', backgroundColor: '#fff', padding: '2px 6px', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
                                     {user.id}
                                   </code>
                                 </div>
                                 <div>
-                                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', fontWeight: 700, textTransform: 'uppercase' }}>
+                                  <span style={{ fontSize: '11px', color: 'var(--admin-text-muted)', display: 'block', fontWeight: 700, textTransform: 'uppercase' }}>
                                     Auth Session Created
                                   </span>
-                                  <span style={{ fontSize: '12px', color: 'var(--text-main)' }}>
+                                  <span style={{ fontSize: '12px', color: 'var(--admin-text-main)' }}>
                                     {formatDate(user.registeredAt)}
                                   </span>
                                 </div>

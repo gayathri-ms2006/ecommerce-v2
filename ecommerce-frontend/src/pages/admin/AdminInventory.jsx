@@ -64,6 +64,7 @@ const AdminInventory = () => {
           sku: matchingProduct.sku || item.sku || `SKU-${String(index + 1).padStart(3, '0')}`,
           category: matchingProduct.category || item.category || 'General',
           price: Number(matchingProduct.price || 0),
+          imageUrl: matchingProduct.imageUrl || '',
           stockQuantity,
         };
       }).filter(Boolean);
@@ -123,26 +124,59 @@ const AdminInventory = () => {
     }
   };
 
+  // Stats computation for stock levels
+  const stats = useMemo(() => {
+    const total = inventory.length;
+    const outOfStock = inventory.filter(item => item.stockQuantity === 0).length;
+    const lowStock = inventory.filter(item => item.stockQuantity > 0 && item.stockQuantity <= 10).length;
+    const inStock = total - outOfStock - lowStock;
+
+    return { total, outOfStock, lowStock, inStock };
+  }, [inventory]);
+
   return (
     <AdminLayout title="Inventory" subtitle="Monitor availability and act on low stock">
+      {/* Mini Stats Summary */}
+      <div className="admin-kpi-grid" style={{ marginBottom: '24px' }}>
+        <div className="admin-stat-card accent-green">
+          <div className="stat-card-label">In Stock Items</div>
+          <div className="stat-card-value">{stats.inStock}</div>
+          <div className="stat-card-subtext">Optimal stock count</div>
+        </div>
+        <div className="admin-stat-card accent-warning">
+          <div className="stat-card-label">Low Stock Alerts</div>
+          <div className="stat-card-value">{stats.lowStock}</div>
+          <div className="stat-card-subtext">Less than 10 units remaining</div>
+        </div>
+        <div className="admin-stat-card accent-purple">
+          <div className="stat-card-label">Out of Stock Items</div>
+          <div className="stat-card-value" style={{ color: '#ef4444' }}>{stats.outOfStock}</div>
+          <div className="stat-card-subtext">Inactive on store page</div>
+        </div>
+      </div>
+
       <div className="admin-panel-card">
         <div className="admin-panel-header">
           <div>
-            <h3>Inventory Overview</h3>
-            <p>Track stock levels and perform quantity adjustments.</p>
+            <h3>Stock Health Adjustments</h3>
+            <p>Track levels, use steppers, and save quantities directly.</p>
           </div>
-          <input
-            className="admin-input"
-            placeholder="Search inventory"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
+          <div className="admin-toolbar">
+            <input
+              className="admin-input"
+              placeholder="Search by name, SKU or category..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </div>
         </div>
 
-        {error ? <div className="admin-error-banner">{error}</div> : null}
+        {error ? <div className="admin-error-banner" style={{ marginBottom: '20px' }}>{error}</div> : null}
 
         {loading ? (
           <div className="admin-loading-state">Loading inventory…</div>
+        ) : filteredInventory.length === 0 ? (
+          <div className="admin-empty-chart">No inventory items match search criteria</div>
         ) : (
           <div className="admin-table-wrapper">
             <table className="admin-table">
@@ -153,8 +187,8 @@ const AdminInventory = () => {
                   <th>Category</th>
                   <th>Price</th>
                   <th>Available Qty</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>Stock Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -167,18 +201,38 @@ const AdminInventory = () => {
 
                   return (
                     <tr key={item.id}>
-                      <td>{item.productName}</td>
-                      <td>{item.sku}</td>
-                      <td>{item.category}</td>
-                      <td>₹{item.price.toLocaleString('en-IN')}</td>
+                      <td>
+                        <div className="table-product-cell">
+                          <div className="table-product-img-wrapper">
+                            {item.imageUrl ? (
+                              <img src={item.imageUrl} alt={item.productName} className="table-product-img" />
+                            ) : (
+                              <div className="table-product-img-placeholder">📦</div>
+                            )}
+                          </div>
+                          <div className="table-product-info">
+                            <strong>{item.productName}</strong>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <code style={{ fontSize: '11px', color: '#475569' }}>{item.sku}</code>
+                      </td>
+                      <td>
+                        <span className="status-pill info" style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>
+                          {item.category}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 600 }}>₹{item.price.toLocaleString('en-IN')}</td>
                       <td>
                         <div className="inventory-quantity-cell">
                           <button
                             type="button"
                             className="admin-icon-btn"
                             onClick={() => handleDecrement(item.id, item.stockQuantity)}
+                            aria-label="Decrease stock"
                           >
-                            -
+                            −
                           </button>
                           <input
                             className="admin-quantity-input"
@@ -191,6 +245,7 @@ const AdminInventory = () => {
                             type="button"
                             className="admin-icon-btn"
                             onClick={() => handleIncrement(item.id, item.stockQuantity)}
+                            aria-label="Increase stock"
                           >
                             +
                           </button>
@@ -202,13 +257,20 @@ const AdminInventory = () => {
                         </span>
                       </td>
                       <td>
-                        <button
-                          type="button"
-                          className="admin-primary-btn compact"
-                          onClick={() => saveQuantity(item.productId || item.id, item.stockQuantity)}
-                        >
-                          Save
-                        </button>
+                        <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
+                          <button
+                            type="button"
+                            className="admin-primary-btn compact"
+                            onClick={() => saveQuantity(item.productId || item.id, item.stockQuantity)}
+                            disabled={draftQuantities[item.id] === undefined}
+                            style={{
+                              opacity: draftQuantities[item.id] === undefined ? 0.6 : 1,
+                              cursor: draftQuantities[item.id] === undefined ? 'not-allowed' : 'pointer'
+                            }}
+                          >
+                            Save
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
