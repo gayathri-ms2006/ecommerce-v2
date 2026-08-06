@@ -2,7 +2,7 @@ import { apiRequest } from './api';
 import { getUserId } from './auth';
 
 /**
- * Create Order in the backend
+ * Create Order 
  */
 export const createOrder = async (orderData) => {
   try {
