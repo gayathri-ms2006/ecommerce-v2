@@ -4,9 +4,23 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '**/package.json'
+      - '**/package-lock.json'
+      - 'ecommerce-microservices/terraform/**/*.tf'
+      - 'ecommerce-microservices/terraform/**/*.tfvars'
+      - '.github/workflows/snyk.yml'
   pull_request:
     branches:
       - main
+    paths:
+      - '**/package.json'
+      - '**/package-lock.json'
+      - 'ecommerce-microservices/terraform/**/*.tf'
+      - 'ecommerce-microservices/terraform/**/*.tfvars'
+      - '.github/workflows/snyk.yml'
+  schedule:
+    - cron: '0 0 * * *'
 
 jobs:
   snyk:
