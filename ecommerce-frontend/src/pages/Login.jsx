@@ -4,7 +4,7 @@ import { signInUser, isAuthenticated } from '../services/auth';
 import '../styles/Login.css';
 
 /**
- * Modern E-Commerce Login Page Component testing login
+ * Modern E-Commerce Login Page Component testing login added testing
  * Connects with AWS Cognito using AWS Amplify and provides a highly-aesthetic user experience.
  */
 const Login = () => {
