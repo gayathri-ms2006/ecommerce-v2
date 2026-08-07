@@ -306,7 +306,8 @@ const Products = () => {
         <div className="active-filter-indicator">
           <span className="active-filter-chip">
             {selectedCategory}
-            <span
+            <button
+              type="button"
               className="clear-filter-btn"
               onClick={() => {
                 setSelectedCategory('');
@@ -317,7 +318,7 @@ const Products = () => {
               title="Clear category filter"
             >
               ×
-            </span>
+            </button>
           </span>
         </div>
       )}

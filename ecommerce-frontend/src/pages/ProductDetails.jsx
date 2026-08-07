@@ -404,6 +404,14 @@ const ProductDetails = () => {
                     key={simId}
                     className="catalog-item-card"
                     onClick={() => navigate(`/product/${simId}`)}
+                    role="button"
+                    tabIndex="0"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        navigate(`/product/${simId}`);
+                      }
+                    }}
                   >
                     <span className={`card-badge-label badge-${badge.toLowerCase()}`}>{badge}</span>
                     <div className="card-image-box">

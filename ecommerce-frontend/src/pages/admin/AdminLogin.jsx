@@ -1,120 +1,24 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { signInUser, isAdmin } from '../../services/auth';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useLoginForm } from '../../hooks/useLoginForm';
 import '../../styles/Login.css';
 
 const AdminLogin = () => {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
-  const [touched, setTouched] = useState({ email: false, password: false });
-
-  // Email format validator regex helper
-  const isValidEmail = (val) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-  };
-
-  // Perform client side validations
-  const validateForm = () => {
-    const errors = { email: '', password: '' };
-    let isValid = true;
-
-    if (!email.trim()) {
-      errors.email = 'Email address is required';
-      isValid = false;
-    } else if (!isValidEmail(email)) {
-      errors.email = 'Please enter a valid email address';
-      isValid = false;
-    }
-
-    if (!password) {
-      errors.password = 'Password is required';
-      isValid = false;
-    }
-
-    setFieldErrors(errors);
-    return isValid;
-  };
-
-  // Triggers validation on individual field focus blur
-  const handleBlur = (field) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-    
-    setFieldErrors(prev => {
-      const nextErrors = { ...prev };
-      if (field === 'email') {
-        if (!email.trim()) {
-          nextErrors.email = 'Email address is required';
-        } else if (!isValidEmail(email)) {
-          nextErrors.email = 'Please enter a valid email address';
-        } else {
-          nextErrors.email = '';
-        }
-      }
-      if (field === 'password') {
-        if (!password) {
-          nextErrors.password = 'Password is required';
-        } else {
-          nextErrors.password = '';
-        }
-      }
-      return nextErrors;
-    });
-  };
-
-  // Handles input change events dynamically
-  const handleChange = (field, val) => {
-    if (field === 'email') {
-      setEmail(val);
-      if (touched.email) {
-        setFieldErrors(prev => ({
-          ...prev,
-          email: !val.trim() ? 'Email address is required' : (!isValidEmail(val) ? 'Please enter a valid email address' : '')
-        }));
-      }
-    }
-    if (field === 'password') {
-      setPassword(val);
-      if (touched.password) {
-        setFieldErrors(prev => ({
-          ...prev,
-          password: !val ? 'Password is required' : ''
-        }));
-      }
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setAuthError('');
-    setTouched({ email: true, password: true });
-
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const result = await signInUser(email.trim(), password);
-
-      if (result?.isSignedIn && isAdmin()) {
-        navigate('/admin/dashboard', { replace: true });
-        return;
-      }
-
-      setAuthError('Access denied. Only admin accounts can sign in here.');
-    } catch (err) {
-      setAuthError(err.message || 'Unable to sign in. Please verify your admin credentials.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    email,
+    password,
+    showPassword,
+    setShowPassword,
+    rememberMe,
+    setRememberMe,
+    isLoading,
+    authError,
+    fieldErrors,
+    touched,
+    handleBlur,
+    handleChange,
+    handleSubmit
+  } = useLoginForm(true);
 
   return (
     <div className="login-page">

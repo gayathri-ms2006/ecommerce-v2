@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { signUpUser, confirmSignUpUser } from '../services/auth';
 import '../styles/Login.css'; // Reuses base layout variables
 import '../styles/Signup.css';
@@ -458,7 +458,7 @@ const Signup = () => {
 
             <div className="login-signup-redirect">
               <span>Already have an account? </span>
-              <span className="redirect-link" onClick={() => navigate('/login')}>Sign In</span>
+              <Link to="/login" className="redirect-link">Sign In</Link>
             </div>
 
             <footer className="login-extra-footer">

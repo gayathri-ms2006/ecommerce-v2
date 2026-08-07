@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { signInUser, isAuthenticated } from '../services/auth';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useLoginForm } from '../hooks/useLoginForm';
 import '../styles/Login.css';
 
 /**
@@ -8,148 +8,19 @@ import '../styles/Login.css';
  * Connects with AWS Cognito using AWS Amplify and provides a highly-aesthetic user experience.
  */
 const Login = () => {
-  const navigate = useNavigate();
-  
-  // Form states
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  
-  // UI UX States
-  const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
-  const [touched, setTouched] = useState({ email: false, password: false });
-
-  // Redirect to products page if already authenticated on mount
-  React.useEffect(() => {
-    if (isAuthenticated()) {
-      navigate('/products');
-    }
-  }, [navigate]);
-
-  // Email format validator regex helper
-  const isValidEmail = (val) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-  };
-
-  // Perform client side validations
-  const validateForm = () => {
-    const errors = { email: '', password: '' };
-    let isValid = true;
-
-    if (!email.trim()) {
-      errors.email = 'Email address is required';
-      isValid = false;
-    } else if (!isValidEmail(email)) {
-      errors.email = 'Please enter a valid email address';
-      isValid = false;
-    }
-
-    if (!password) {
-      errors.password = 'Password is required';
-      isValid = false;
-    }
-
-    setFieldErrors(errors);
-    return isValid;
-  };
-
-  // Triggers validation on individual field focus blur
-  const handleBlur = (field) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-    
-    setFieldErrors(prev => {
-      const nextErrors = { ...prev };
-      if (field === 'email') {
-        if (!email.trim()) {
-          nextErrors.email = 'Email address is required';
-        } else if (!isValidEmail(email)) {
-          nextErrors.email = 'Please enter a valid email address';
-        } else {
-          nextErrors.email = '';
-        }
-      }
-      if (field === 'password') {
-        if (!password) {
-          nextErrors.password = 'Password is required';
-        } else {
-          nextErrors.password = '';
-        }
-      }
-      return nextErrors;
-    });
-  };
-
-  // Handles input change events dynamically
-  const handleChange = (field, val) => {
-    if (field === 'email') {
-      setEmail(val);
-      if (touched.email) {
-        setFieldErrors(prev => ({
-          ...prev,
-          email: !val.trim() ? 'Email address is required' : (!isValidEmail(val) ? 'Please enter a valid email address' : '')
-        }));
-      }
-    }
-    if (field === 'password') {
-      setPassword(val);
-      if (touched.password) {
-        setFieldErrors(prev => ({
-          ...prev,
-          password: !val ? 'Password is required' : ''
-        }));
-      }
-    }
-  };
-
-  // Submit form handler using async/await
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setAuthError('');
-    
-    // Set all fields to touched to display validation issues
-    setTouched({ email: true, password: true });
-    
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const result = await signInUser(email.trim(), password);
-      
-      // If we are signed in successfully, navigate to /products page
-      if (result.isSignedIn) {
-        navigate('/products');
-      } else {
-        // If there's an incomplete sign in flow (e.g. password reset required)
-        setAuthError('Authentication required further steps. Please check your credentials or contact support.');
-      }
-    } catch (err) {
-      console.error('Login process error details:', err);
-      
-      // Parse Cognito and generic connection exceptions
-      const errorName = err.name || '';
-      const errorMessage = err.message || '';
-      
-      if (errorName === 'UserNotFoundException') {
-        setAuthError('No account found with this email address.');
-      } else if (errorName === 'NotAuthorizedException') {
-        setAuthError('Incorrect username or password. Please try again.');
-      } else if (errorName === 'UserNotConfirmedException') {
-        setAuthError('This account is not confirmed. Please confirm your registration first.');
-      } else if (errorName === 'LimitExceededException') {
-        setAuthError('Too many unsuccessful login attempts. Please try again later.');
-      } else if (errorMessage.toLowerCase().includes('network') || errorName === 'NetworkError') {
-        setAuthError('Network connection error. Please check your internet connectivity and try again.');
-      } else {
-        setAuthError(errorMessage || 'An error occurred during authentication. Please try again.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    email,
+    password,
+    showPassword,
+    setShowPassword,
+    isLoading,
+    authError,
+    fieldErrors,
+    touched,
+    handleBlur,
+    handleChange,
+    handleSubmit
+  } = useLoginForm(false);
 
   return (
     <div className="login-page">
@@ -286,7 +157,7 @@ const Login = () => {
 
             <div className="login-signup-redirect">
               <span>Don't have an account? </span>
-              <span className="redirect-link" onClick={() => navigate('/signup')}>Sign Up</span>
+              <Link to="/signup" className="redirect-link">Sign Up</Link>
             </div>
 
             <footer className="login-extra-footer">

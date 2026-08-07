@@ -194,8 +194,10 @@ const Wishlist = () => {
 
                   <div className="wishlist-card-body">
                     <div className="wishlist-item-info">
-                      <h3 className="wishlist-item-title" title={name} onClick={() => navigate(`/product/${prodId}`)}>
-                        {name}
+                      <h3 className="wishlist-item-title" title={name}>
+                        <Link to={`/product/${prodId}`} className="wishlist-item-link">
+                          {name}
+                        </Link>
                       </h3>
                       <span className="wishlist-item-price">{formatPrice(price)}</span>
                       {item.addedAt && (
